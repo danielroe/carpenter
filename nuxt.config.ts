@@ -1,6 +1,10 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   devtools: { enabled: true },
+  experimental: { noVueServer: true },
+  routeRules: {
+    '/': { prerender: true }
+  },
   modules: ['@nuxthub/core', '@nuxt/eslint'],
   runtimeConfig: {
     cloudflare: {
