@@ -7,7 +7,8 @@ export function useGitHubAPI (event: H3Event) {
   return $fetch.create({
     baseURL: `https://api.github.com`,
     headers: {
-      Authorization: `Bearer ${config.githubToken}`,
+      // @ts-expect-error import meta does not contain `env`
+      Authorization: `Bearer ${config.githubToken || import.meta.env.NUXT.GITHUB_TOKEN}`,
       'User-Agent': 'Nuxtbot',
       Accept: 'application/vnd.github+json',
       'X-GitHub-Api-Version': '2022-11-28',
