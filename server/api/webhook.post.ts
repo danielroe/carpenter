@@ -24,30 +24,29 @@ export default defineEventHandler(async event => {
 
   const answer = res.match(/\{[\s\S]*\}/g)?.[0] || ''
 
-  let value
-
   try {
-    value = JSON.parse(answer)
+    const value = JSON.parse(answer)
+
+    if (value.issueType === 'bug' && value.reproductionProvided === false) {
+      const $github = useGitHubAPI(event)
+      try {
+        await $github(`repos/${repository.full_name}/issues/${issue.number}/labels`, {
+          method: 'POST',
+          body: {
+            labels: ['needs reproduction']
+          }
+        })
+      } catch (err) {
+        console.log(err)
+        throw createError('Could not add label.')
+      }
+    }
+
+    return null
+
   } catch {
     console.error('Could not parse response from OpenAI', answer)
     throw createError({ message: 'Could not parse.' })
   }
-
-  if (value.issueType === 'bug' && value.reproductionProvided === false) {
-    const $github = useGitHubAPI(event)
-    try {
-      await $github(`repos/${repository.full_name}/issues/${issue.number}/labels`, {
-        method: 'POST',
-        body: {
-          labels: ['needs reproduction']
-        }
-      })
-    } catch (err) {
-      console.log(err)
-      throw createError('Could not add label.')
-    }
-  }
-
-  return null
 })
 
