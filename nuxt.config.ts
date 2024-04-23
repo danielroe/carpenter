@@ -8,7 +8,7 @@ export default defineNuxtConfig({
       apiToken: ''
     },
     github: {
-      token: ''
+      token: process.env.NUXT_GITHUB_TOKEN || ''
     }
   },
   hub: {
