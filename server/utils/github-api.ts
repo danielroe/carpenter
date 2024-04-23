@@ -3,6 +3,9 @@ import type { H3Event } from 'h3'
 export function useGitHubAPI (event: H3Event) {
   const config = useRuntimeConfig(event)
 
+  console.log('GitHub token:', !!config.githubToken, config.githubToken?.slice(-5))
+  // @ts-expect-error import meta does not contain `env`
+  console.log('GitHub token:', !!import.meta.env.NUXT_GITHUB_TOKEN, import.meta.env.NUXT_GITHUB_TOKEN?.slice(-5))
   // Create API client with default values for readability
   return $fetch.create({
     baseURL: `https://api.github.com`,
