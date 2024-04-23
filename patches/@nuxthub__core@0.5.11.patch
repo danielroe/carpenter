@@ -1,0 +1,24 @@
+diff --git a/dist/module.mjs b/dist/module.mjs
+index f1cb577087628f1e916ed35f83f31675570611e0..91cdba409a2b256ffd7d09fce05f70ebdf0be0ea 100644
+--- a/dist/module.mjs
++++ b/dist/module.mjs
+@@ -14,6 +14,7 @@ const version = "0.5.11";
+ 
+ function generateWrangler(hub) {
+   return [
++    'account_id = "83430b3b7efdba7efceccf3a2f921042"',
+     hub.analytics ? [
+       "analytics_engine_datasets = [",
+       '  { binding = "ANALYTICS", dataset = "default" }',
+@@ -34,6 +35,11 @@ function generateWrangler(hub) {
+       "d1_databases = [",
+       '  { binding = "DB", database_name = "default", database_id = "default" }',
+       "]"
++    ] : [],
++    hub.ai ? [
++      "[ai]",
++      'binding = "AI"',
++      ""
+     ] : []
+   ].flat().join("\n");
+ }
