@@ -12,9 +12,14 @@ export default defineEventHandler(async event => {
   if (body.split(' ').length > 200) return null
 
   const res = await sendMessages(event, '@cf/meta/llama-3-8b-instruct', [
-    { role: 'system', content: 'You are a kind, helpful open-source maintainer who only speaks JSON.' },
-    { role: 'user', content: `${issue.title}\n\n${issue.body}` },
-    { role: 'system', content: "Analyze the user's issue. It might be either a feature request (or enhancement), a bug report, or related to the project documentation or website. Reply with a JSON-formatted object containing the following properties:\n\n- `reproductionProvided` (true/false, with true indicating that a link to a code reproduction was provided, or there is enough information to reproduce the problem).\n\n- `issueType` ('enhancement', 'documentation' or 'bug' depending on the type of issue).\n\n\n\nInclude nothing but a JSON object in your response." },
+    {
+      role: 'system', content: 'You are a kind, helpful open-source maintainer. You only respond in a JSON object with the following keys: issueType, reproductionProvided.'
+    },
+    { role: 'user', content: `# A problem with the docs\n\nThe website isn't displaying properly.` },
+    { role: 'assistant', content: JSON.stringify({ issueType: 'documentation', reproductionProvided: false }) },
+    { role: 'user', content: `# Runtime config doesn't work\n\nHere's a link to reproduce: https://stackblitz.com/github/my/site.` },
+    { role: 'assistant', content: JSON.stringify({ issueType: 'bug', reproductionProvided: true }) },
+    { role: 'user', content: `# ${issue.title}\n\n${issue.body}` },
   ])
 
   const answer = res.match(/\{[\s\S]*\}/g)?.[0] || ''
@@ -43,5 +48,6 @@ export default defineEventHandler(async event => {
     }
   }
 
-  return res
+  return null
 })
+

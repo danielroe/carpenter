@@ -21,7 +21,7 @@ function useAPI (event: H3Event) {
   })
 }
 
-export async function sendMessages(event: H3Event, modelId: string, messages: Array<{ role: 'user' | 'system', content: string }>): Promise<string> {
+export async function sendMessages(event: H3Event, modelId: string, messages: Array<{ role: 'user' | 'system' | 'assistant', content: string }>): Promise<string> {
   return event.context.cloudflare.env?.AI?.run
     ? event.context.cloudflare.env.AI.run(modelId, { messages }).then((r: { response: string }) => r.response)
     : useAPI(event)<CFResponse>(modelId, { body: { messages } }).then(r => r.result?.response)
