@@ -5,7 +5,7 @@ export function useGitHubAPI (event: H3Event) {
   const config = useRuntimeConfig(event)
 
   if (import.meta.dev) {
-    return console.log as $Fetch<unknown, NitroFetchRequest>
+    return ((...args: unknown[]) => Promise.resolve(console.log(...args))) as $Fetch<unknown, NitroFetchRequest>
   }
 
   // Create API client with default values for readability
