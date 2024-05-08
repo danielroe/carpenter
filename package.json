@@ -12,20 +12,20 @@
     "typecheck": "nuxt typecheck"
   },
   "dependencies": {
-    "@nuxt/eslint": "^0.3.9",
-    "@nuxthub/core": "^0.5.11",
+    "@nuxt/eslint": "^0.3.10",
+    "@nuxthub/core": "^0.5.16",
     "nuxt": "^3.11.2"
   },
   "devDependencies": {
-    "@nuxt/eslint-config": "^0.3.9",
-    "eslint": "^9.1.1",
+    "@nuxt/eslint-config": "^0.3.10",
+    "eslint": "^9.2.0",
     "nitro-cloudflare-dev": "^0.1.4",
-    "vue-tsc": "^2.0.14",
-    "wrangler": "^3.51.2"
+    "vue-tsc": "^2.0.16",
+    "wrangler": "^3.53.1"
   },
   "pnpm": {
     "patchedDependencies": {
-      "@nuxthub/core@0.5.11": "patches/@nuxthub__core@0.5.11.patch"
+      "@nuxthub/core@0.5.16": "patches/@nuxthub__core@0.5.16.patch"
     }
   }
 }
