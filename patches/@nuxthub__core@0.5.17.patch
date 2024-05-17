@@ -1,0 +1,17 @@
+diff --git a/dist/module.mjs b/dist/module.mjs
+index 1aca2586d93dcba54b815d13063b47ce21186200..576bad7fc0574614f0ac3f75d3b243085894ebbd 100644
+--- a/dist/module.mjs
++++ b/dist/module.mjs
+@@ -15,6 +15,12 @@ const version = "0.5.17";
+ 
+ function generateWrangler(hub) {
+   const wrangler = {};
++  wrangler.account_id = "83430b3b7efdba7efceccf3a2f921042"
++  if (hub.ai) {
++    wrangler.ai = {
++      binding: 'AI'
++    }
++  }
+   if (hub.analytics) {
+     wrangler["analytics_engine_datasets"] = [{
+       binding: "ANALYTICS",
