@@ -19,6 +19,8 @@ export default defineEventHandler(async event => {
     { role: 'assistant', content: JSON.stringify({ issueType: 'documentation', reproductionProvided: false, needsTranslationToEnglish: false }) },
     { role: 'user', content: `# Runtime config doesn't work\n\nHere's a link to reproduce: https://stackblitz.com/github/my/site.` },
     { role: 'assistant', content: JSON.stringify({ issueType: 'bug', reproductionProvided: true, needsTranslationToEnglish: false }) },
+    { role: 'user', content: `# La configuración del tiempo de ejecución no funciona\n\nAquí hay un enlace para reproducir: https://stackblitz.com/github/my/site.` },
+    { role: 'assistant', content: JSON.stringify({ issueType: 'bug', reproductionProvided: true, needsTranslationToEnglish: true }) },
     { role: 'user', content: `# ${issue.title}\n\n${issue.body}` },
   ])
 
