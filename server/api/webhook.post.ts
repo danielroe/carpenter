@@ -16,11 +16,11 @@ export default defineEventHandler(async event => {
       role: 'system', content: 'You are a kind, helpful open-source maintainer. You only respond in a JSON object with the following keys: issueType, reproductionProvided, needsTranslationToEnglish.'
     },
     { role: 'user', content: `# A problem with the docs\n\nThe website isn't displaying properly.` },
-    { role: 'assistant', content: JSON.stringify({ issueType: 'documentation', reproductionProvided: false, needsTranslationToEnglish: false }) },
+    { role: 'assistant', content: JSON.stringify({ issueType: 'documentation', reproductionProvided: false }) },
     { role: 'user', content: `# Runtime config doesn't work\n\nHere's a link to reproduce: https://stackblitz.com/github/my/site.` },
-    { role: 'assistant', content: JSON.stringify({ issueType: 'bug', reproductionProvided: true, needsTranslationToEnglish: false }) },
+    { role: 'assistant', content: JSON.stringify({ issueType: 'bug', reproductionProvided: true }) },
     { role: 'user', content: `# La configuración del tiempo de ejecución no funciona\n\nAquí hay un enlace para reproducir: https://stackblitz.com/github/my/site.` },
-    { role: 'assistant', content: JSON.stringify({ issueType: 'bug', reproductionProvided: true, needsTranslationToEnglish: true }) },
+    { role: 'assistant', content: JSON.stringify({ issueType: 'bug', reproductionProvided: true }) },
     { role: 'user', content: `# ${issue.title}\n\n${issue.body}` },
   ])
 
@@ -41,28 +41,28 @@ export default defineEventHandler(async event => {
       }))
     }
 
-    if (value.needsTranslationToEnglish) {
-      const [title, summary] = await Promise.all([
-        sendMessages(event, '@cf/meta/llama-3-8b-instruct', [
-          { role: 'system', content: 'You are an expert translator. You translate into English everything said to you without adding any comment of your own.' },
-          { role: 'user', content: `${issue.title}` },
-        ]),
-        sendMessages(event, '@cf/meta/llama-3-8b-instruct', [
-          { role: 'system', content: 'You are an expert translator. You generate a brief summary in English everything said to you without adding any comment of your own.' },
-          { role: 'user', content: `${issue.body}` },
-        ])
-      ])
+    // if (value.needsTranslationToEnglish) {
+    //   const [title, summary] = await Promise.all([
+    //     sendMessages(event, '@cf/meta/llama-3-8b-instruct', [
+    //       { role: 'system', content: 'You are an expert translator. You translate into English everything said to you without adding any comment of your own.' },
+    //       { role: 'user', content: `${issue.title}` },
+    //     ]),
+    //     sendMessages(event, '@cf/meta/llama-3-8b-instruct', [
+    //       { role: 'system', content: 'You are an expert translator. You generate a brief summary in English everything said to you without adding any comment of your own.' },
+    //       { role: 'user', content: `${issue.body}` },
+    //     ])
+    //   ])
 
-      promises.push($github(`repos/${repository.full_name}/issues/${issue.number}`, {
-        method: 'PATCH',
-        body: {
-          title,
-          body: `**Summary (generated)**:\n\n${summary}\n\n<hr>\n\n${issue.body}`
-        }
-      }))
-    }
+    //   promises.push($github(`repos/${repository.full_name}/issues/${issue.number}`, {
+    //     method: 'PATCH',
+    //     body: {
+    //       title,
+    //       body: `**Summary (generated)**:\n\n${summary}\n\n<hr>\n\n${issue.body}`
+    //     }
+    //   }))
+    // }
 
-    await Promise.all(promises)
+    event.waitUntil(Promise.all(promises))
 
     return null
 
