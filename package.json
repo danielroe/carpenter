@@ -13,19 +13,20 @@
   },
   "dependencies": {
     "@nuxt/eslint": "^0.3.13",
-    "@nuxthub/core": "^0.5.17",
-    "nuxt": "^3.11.2"
+    "@nuxthub/core": "^0.7.0",
+    "nuxt": "^3.12.2"
   },
   "devDependencies": {
     "@nuxt/eslint-config": "^0.3.13",
-    "eslint": "^9.3.0",
+    "eslint": "^9.5.0",
     "nitro-cloudflare-dev": "^0.1.4",
-    "vue-tsc": "^2.0.19",
-    "wrangler": "^3.57.0"
+    "vue-tsc": "^2.0.22",
+    "wrangler": "^3.62.0"
   },
   "pnpm": {
     "patchedDependencies": {
-      "@nuxthub/core@0.5.17": "patches/@nuxthub__core@0.5.17.patch"
+      "@nuxthub/core@0.7.0": "patches/@nuxthub__core@0.5.17.patch"
     }
-  }
+  },
+  "packageManager": "pnpm@9.4.0"
 }
