@@ -1,3 +1,1 @@
-export default defineEventHandler(async event => {
-  return 'Nuxtbot is ready!'
-})
+export default defineEventHandler(_ => 'Nuxtbot is ready!')

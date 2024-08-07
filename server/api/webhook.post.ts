@@ -30,7 +30,7 @@ export default defineEventHandler(async event => {
     const value = JSON.parse(answer)
 
     const $github = useGitHubAPI(event)
-    const promises: Array<Promise<any>> = []
+    const promises: Array<Promise<unknown>> = []
 
     if (value.issueType === 'bug' && value.reproductionProvided === false) {
       promises.push($github(`repos/${repository.full_name}/issues/${issue.number}/labels`, {
