@@ -4,20 +4,23 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   experimental: { noVueServer: true },
   routeRules: {
-    '/': { prerender: true }
+    '/': { prerender: true },
   },
   modules: ['@nuxthub/core', '@nuxt/eslint'],
+  eslint: {
+    config: {
+      stylistic: true,
+    },
+  },
   runtimeConfig: {
     cloudflare: {
-      accountId: '83430b3b7efdba7efceccf3a2f921042',
-      apiToken: ''
+      apiToken: '',
     },
     github: {
-      token: process.env.NUXT_GITHUB_TOKEN || ''
-    }
+      token: process.env.NUXT_GITHUB_TOKEN || '',
+    },
   },
   hub: {
-    // @ts-expect-error patched version of nuxt hub
-    ai: true
+    ai: true,
   },
 })
