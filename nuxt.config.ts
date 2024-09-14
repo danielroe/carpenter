@@ -13,14 +13,12 @@ export default defineNuxtConfig({
     },
   },
   runtimeConfig: {
-    cloudflare: {
-      apiToken: '',
-    },
     github: {
       token: process.env.NUXT_GITHUB_TOKEN || '',
     },
   },
   hub: {
     ai: true,
+    kv: true,
   },
 })

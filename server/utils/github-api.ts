@@ -12,7 +12,7 @@ export function useGitHubAPI(event: H3Event) {
   return $fetch.create({
     baseURL: `https://api.github.com`,
     headers: {
-      'Authorization': `Bearer ${config.githubToken || process.env.NUXT_GITHUB_TOKEN}`,
+      'Authorization': `Bearer ${config.github.token}`,
       'User-Agent': 'Nuxtbot',
       'Accept': 'application/vnd.github+json',
       'X-GitHub-Api-Version': '2022-11-28',
