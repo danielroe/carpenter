@@ -1,5 +1,9 @@
 export default defineEventHandler(async (event) => {
-  // TODO: Verify the request is from GitHub
+  const isValidWebhook = await isValidGithubWebhook(event)
+
+  if (!import.meta.dev && !isValidWebhook) {
+    throw createError({ statusCode: 401, message: 'Unauthorized: webhook is not valid' })
+  }
 
   // TODO: implement as a GitHub app
   const { action, issue, repository /* installation */ } = await readBody(event)

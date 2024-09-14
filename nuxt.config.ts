@@ -6,7 +6,7 @@ export default defineNuxtConfig({
   routeRules: {
     '/': { prerender: true },
   },
-  modules: ['@nuxthub/core', '@nuxt/eslint'],
+  modules: ['@nuxthub/core', '@nuxt/eslint', 'nuxt-webhook-validators'],
   eslint: {
     config: {
       stylistic: true,

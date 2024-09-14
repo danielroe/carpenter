@@ -17,6 +17,9 @@ importers:
       nuxt:
         specifier: ^3.13.0
         version: 3.13.0(@parcel/watcher@2.4.1)(@types/node@20.12.7)(encoding@0.1.13)(eslint@9.9.1(jiti@1.21.6))(ioredis@5.4.1)(magicast@0.3.4)(optionator@0.9.3)(rollup@4.21.0)(terser@5.30.4)(typescript@5.5.4)(vite@5.4.2(@types/node@20.12.7)(terser@5.30.4))(vue-tsc@2.1.4(typescript@5.5.4))
+      nuxt-webhook-validators:
+        specifier: ^0.0.6
+        version: 0.0.6(magicast@0.3.4)(rollup@4.21.0)
     devDependencies:
       '@nuxt/eslint-config':
         specifier: ^0.5.5
@@ -3028,6 +3031,9 @@ packages:
     resolution: {integrity: sha512-6vRdiXTw9SajEQOUi6Ze/XaIXzy1q/sD5UqHQSv3yqTu7Pot5S7fEihNXV8LpcgLz+9HzjVt70r7jYe7R99c2w==}
     engines: {node: ^16.10.0 || >=18.0.0}
     hasBin: true
+
+  nuxt-webhook-validators@0.0.6:
+    resolution: {integrity: sha512-tex/VINWDZa5Vs/UqZ/KY/SpSis424lo2Iyr1HfRRuFPvvml42PT4dN7rjX+7avWS3dAklhAHZuG1oY2QE9sjA==}
 
   nuxt@3.13.0:
     resolution: {integrity: sha512-NZlPGlMav18KXWiOmTguQtH5lcrwooPniWXM3Ca4c9spsMRu3wyWLlN8wiI/cK+lEu3rQyKCGSA75nFVK4Ew3w==}
@@ -7502,6 +7508,16 @@ snapshots:
   nuxi@3.12.0:
     optionalDependencies:
       fsevents: 2.3.3
+
+  nuxt-webhook-validators@0.0.6(magicast@0.3.4)(rollup@4.21.0):
+    dependencies:
+      '@nuxt/kit': 3.13.0(magicast@0.3.4)(rollup@4.21.0)
+      defu: 6.1.4
+      ohash: 1.1.3
+    transitivePeerDependencies:
+      - magicast
+      - rollup
+      - supports-color
 
   nuxt@3.13.0(@parcel/watcher@2.4.1)(@types/node@20.12.7)(encoding@0.1.13)(eslint@9.9.1(jiti@1.21.6))(ioredis@5.4.1)(magicast@0.3.4)(optionator@0.9.3)(rollup@4.21.0)(terser@5.30.4)(typescript@5.5.4)(vite@5.4.2(@types/node@20.12.7)(terser@5.30.4))(vue-tsc@2.1.4(typescript@5.5.4)):
     dependencies:
