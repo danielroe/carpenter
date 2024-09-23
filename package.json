@@ -19,11 +19,11 @@
   },
   "devDependencies": {
     "@nuxt/eslint-config": "^0.5.7",
-    "eslint": "^9.11.0",
+    "eslint": "^9.11.1",
     "nitro-cloudflare-dev": "^0.1.6",
     "typescript": "^5.6.2",
     "vue-tsc": "^2.1.6",
-    "wrangler": "^3.78.7"
+    "wrangler": "^3.78.8"
   },
   "packageManager": "pnpm@9.11.0"
 }
