@@ -12,8 +12,8 @@ importers:
         specifier: ^0.5.7
         version: 0.5.7(eslint@9.12.0(jiti@1.21.6))(magicast@0.3.5)(rollup@4.21.0)(typescript@5.6.2)(vite@5.4.7(@types/node@20.12.7)(terser@5.30.4))(webpack-sources@3.2.3)
       '@nuxthub/core':
-        specifier: ^0.7.25
-        version: 0.7.25(ioredis@5.4.1)(magicast@0.3.5)(rollup@4.21.0)(vite@5.4.7(@types/node@20.12.7)(terser@5.30.4))(webpack-sources@3.2.3)
+        specifier: ^0.7.26
+        version: 0.7.26(ioredis@5.4.1)(magicast@0.3.5)(rollup@4.21.0)(vite@5.4.7(@types/node@20.12.7)(terser@5.30.4))(webpack-sources@3.2.3)
       nuxt:
         specifier: ^3.13.2
         version: 3.13.2(@parcel/watcher@2.4.1)(@types/node@20.12.7)(encoding@0.1.13)(eslint@9.12.0(jiti@1.21.6))(ioredis@5.4.1)(magicast@0.3.5)(optionator@0.9.3)(rollup@4.21.0)(terser@5.30.4)(typescript@5.6.2)(vite@5.4.7(@types/node@20.12.7)(terser@5.30.4))(vue-tsc@2.1.6(typescript@5.6.2))(webpack-sources@3.2.3)
@@ -1051,8 +1051,8 @@ packages:
     peerDependencies:
       vue: ^3.3.4
 
-  '@nuxthub/core@0.7.25':
-    resolution: {integrity: sha512-IkHv7kQpDu8YfMekLEDHiAAQAtMLt+p9G0Oq0rZAD9hj6BgHcwavD2hOjOdh6r6Fmve7JewMQsWQGeFPUBuREw==}
+  '@nuxthub/core@0.7.26':
+    resolution: {integrity: sha512-xOfI+txczteKk66cxf9Rb5AL/PttcS47FCotzXVCZflS4xgnJfZb42FurKYagozpu1MbM6V95nXhO/esg3xUbA==}
 
   '@parcel/watcher-android-arm64@2.4.1':
     resolution: {integrity: sha512-LOi/WTbbh3aTn2RYddrO8pnapixAziFl6SMxHM69r3tvdSm94JtCenaKgk1GRg5FJ5wpMCpHeW+7yqPlvZv7kg==}
@@ -2652,9 +2652,6 @@ packages:
   ioredis@5.4.1:
     resolution: {integrity: sha512-2YZsvl7jopIa1gaePkeMtd9rAcSjOOjPtpcLlOeusyO+XH2SK5ZcT+UCrElPP+WVIInh2TzeI4XW9ENaSLVVHA==}
     engines: {node: '>=12.22.0'}
-
-  iron-webcrypto@1.1.1:
-    resolution: {integrity: sha512-5xGwQUWHQSy039rFr+5q/zOmj7GP0Ypzvo34Ep+61bPIhaLduEDp/PvLGlU3awD2mzWUR0weN2vJ1mILydFPEg==}
 
   iron-webcrypto@1.2.1:
     resolution: {integrity: sha512-feOM6FaSr6rEABp/eDfVseKyTMDt+KGpeB35SkVn9Tyn0CqvVsY3EwI0v5i8nMHyJnzCIQf7nsy3p41TPkJZhg==}
@@ -5393,7 +5390,7 @@ snapshots:
       - vue-tsc
       - webpack-sources
 
-  '@nuxthub/core@0.7.25(ioredis@5.4.1)(magicast@0.3.5)(rollup@4.21.0)(vite@5.4.7(@types/node@20.12.7)(terser@5.30.4))(webpack-sources@3.2.3)':
+  '@nuxthub/core@0.7.26(ioredis@5.4.1)(magicast@0.3.5)(rollup@4.21.0)(vite@5.4.7(@types/node@20.12.7)(terser@5.30.4))(webpack-sources@3.2.3)':
     dependencies:
       '@cloudflare/workers-types': 4.20241004.0
       '@nuxt/devtools-kit': 1.5.2(magicast@0.3.5)(rollup@4.21.0)(vite@5.4.7(@types/node@20.12.7)(terser@5.30.4))(webpack-sources@3.2.3)
@@ -6210,7 +6207,7 @@ snapshots:
   c12@1.11.2(magicast@0.3.5):
     dependencies:
       chokidar: 3.6.0
-      confbox: 0.1.7
+      confbox: 0.1.8
       defu: 6.1.4
       dotenv: 16.4.5
       giget: 1.2.3
@@ -7141,7 +7138,7 @@ snapshots:
       crossws: 0.2.4
       defu: 6.1.4
       destr: 2.0.3
-      iron-webcrypto: 1.1.1
+      iron-webcrypto: 1.2.1
       ohash: 1.1.4
       radix3: 1.1.2
       ufo: 1.5.4
@@ -7263,8 +7260,6 @@ snapshots:
       standard-as-callback: 2.1.0
     transitivePeerDependencies:
       - supports-color
-
-  iron-webcrypto@1.1.1: {}
 
   iron-webcrypto@1.2.1: {}
 
