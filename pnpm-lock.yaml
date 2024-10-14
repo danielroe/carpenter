@@ -12,8 +12,8 @@ importers:
         specifier: ^0.6.0
         version: 0.6.0(eslint@9.12.0(jiti@1.21.6))(magicast@0.3.5)(rollup@4.21.0)(typescript@5.6.3)(vite@5.4.7(@types/node@20.12.7)(terser@5.30.4))(webpack-sources@3.2.3)
       '@nuxthub/core':
-        specifier: ^0.7.27
-        version: 0.7.27(ioredis@5.4.1)(magicast@0.3.5)(rollup@4.21.0)(vite@5.4.7(@types/node@20.12.7)(terser@5.30.4))(webpack-sources@3.2.3)
+        specifier: ^0.7.30
+        version: 0.7.30(ioredis@5.4.1)(magicast@0.3.5)(rollup@4.21.0)(vite@5.4.7(@types/node@20.12.7)(terser@5.30.4))(webpack-sources@3.2.3)
       nuxt:
         specifier: ^3.13.2
         version: 3.13.2(@parcel/watcher@2.4.1)(@types/node@20.12.7)(encoding@0.1.13)(eslint@9.12.0(jiti@1.21.6))(ioredis@5.4.1)(magicast@0.3.5)(optionator@0.9.3)(rollup@4.21.0)(terser@5.30.4)(typescript@5.6.3)(vite@5.4.7(@types/node@20.12.7)(terser@5.30.4))(vue-tsc@2.1.6(typescript@5.6.3))(webpack-sources@3.2.3)
@@ -38,7 +38,7 @@ importers:
         version: 2.1.6(typescript@5.6.3)
       wrangler:
         specifier: ^3.80.4
-        version: 3.80.4(@cloudflare/workers-types@4.20241004.0)
+        version: 3.80.4(@cloudflare/workers-types@4.20241011.0)
 
 packages:
 
@@ -263,8 +263,8 @@ packages:
     resolution: {integrity: sha512-rfUCvb3hx4AsvdUZsxgk9lmgEnQehqV3jdtXLP/Xr0+P56n11T/0nXNMzmn7Nnv+IJFOV6X9NmFhuMz4sBPw7w==}
     engines: {node: '>=16.7.0'}
 
-  '@cloudflare/workers-types@4.20241004.0':
-    resolution: {integrity: sha512-3LrPvtecs4umknOF1bTPNLHUG/ZjeSE6PYBQ/tbO7lwaVhjZTaTugiaCny2byrZupBlVNuubQVktcAgMfw0C1A==}
+  '@cloudflare/workers-types@4.20241011.0':
+    resolution: {integrity: sha512-emwBnuFB/2lS1z6NXAeBqrSL8Xwnr7YpgdLuchOmgu/igqBsLLNPBb4Qmgh3neFWUe9wbzQyx030836YF3c3Xw==}
 
   '@cspotcode/source-map-support@0.8.1':
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
@@ -997,6 +997,11 @@ packages:
     peerDependencies:
       vite: '*'
 
+  '@nuxt/devtools-kit@1.6.0':
+    resolution: {integrity: sha512-kJ8mVKwTSN3tdEVNy7mxKCiQk9wsG5t3oOrRMWk6IEbTSov+5sOULqQSM/+OWxWsEDmDfA7QlS5sM3Ti9uMRqQ==}
+    peerDependencies:
+      vite: '*'
+
   '@nuxt/devtools-wizard@1.5.0':
     resolution: {integrity: sha512-Yvc3MHzNZAN3hMoUr4FpVoBQ6etkp1STy56LntHgdEc9ngzcKzGuJJp5kxvytuY3dLUVFKQ6Ptvtv+yjLeoPZQ==}
     hasBin: true
@@ -1047,8 +1052,8 @@ packages:
     peerDependencies:
       vue: ^3.3.4
 
-  '@nuxthub/core@0.7.27':
-    resolution: {integrity: sha512-FEE0py4/gxtgMllOTcoiBSSARUylurK2C5xDtpNiQ3SfWl6Zv9BhdeBiwfSFWZP2gLNsLA+fhv5qL0JHt4I5AA==}
+  '@nuxthub/core@0.7.30':
+    resolution: {integrity: sha512-7DCDFmxmIBMijZTX0LOZZ3PNj8pIXxJ0HaOrMaTyh6TXSOGqRKt1zsM/k4baUhMyNKem+2dLv7326g2YieG0FA==}
 
   '@parcel/watcher-android-arm64@2.4.1':
     resolution: {integrity: sha512-LOi/WTbbh3aTn2RYddrO8pnapixAziFl6SMxHM69r3tvdSm94JtCenaKgk1GRg5FJ5wpMCpHeW+7yqPlvZv7kg==}
@@ -3031,9 +3036,6 @@ packages:
   natural-compare@1.4.0:
     resolution: {integrity: sha512-OWND8ei3VtNC9h7V60qff3SVobHr996CTwgxubgyQYEpg290h9J0buyECNNJexkFm5sOajh5G116RYA1c8ZMSw==}
 
-  nitro-cloudflare-dev@0.1.6:
-    resolution: {integrity: sha512-7YcLTJsTZSZZ89XrTEaDEnFsVWbppBgLO0Rr5n3Nf93gKHTBkBfeGH8//8FVwV2poi6SabVbJ0a2eoJRoII81w==}
-
   nitro-cloudflare-dev@0.2.0:
     resolution: {integrity: sha512-wcvKa0vFZViQm4VBlnVn0SforhfbYvRtq80+18vPXBvhMiTN7KfOthw71goeXelndlmF65TkvNy6SVUWXwOLqg==}
 
@@ -3140,6 +3142,9 @@ packages:
 
   ofetch@1.4.0:
     resolution: {integrity: sha512-MuHgsEhU6zGeX+EMh+8mSMrYTnsqJQQrpM00Q6QHMKNqQ0bKy0B43tk8tL1wg+CnsSTy1kg4Ir2T5Ig6rD+dfQ==}
+
+  ofetch@1.4.1:
+    resolution: {integrity: sha512-QZj2DfGplQAr2oj9KzceK9Hwz6Whxazmn85yYeVuS3u9XTMOGMRx0kO95MQ+vLsj/S/NwBDMMLU5hpxvI6Tklw==}
 
   ohash@1.1.4:
     resolution: {integrity: sha512-FlDryZAahJmEF3VR3w1KogSEdWX3WhA5GPakFx4J81kEAiHyLMpdLLElS8n8dfNadMgAne/MywcvmogzscVt4g==}
@@ -4627,7 +4632,7 @@ snapshots:
       mime: 3.0.0
       zod: 3.23.8
 
-  '@cloudflare/workers-types@4.20241004.0': {}
+  '@cloudflare/workers-types@4.20241011.0': {}
 
   '@cspotcode/source-map-support@0.8.1':
     dependencies:
@@ -5136,6 +5141,18 @@ snapshots:
       - supports-color
       - webpack-sources
 
+  '@nuxt/devtools-kit@1.6.0(magicast@0.3.5)(rollup@4.21.0)(vite@5.4.7(@types/node@20.12.7)(terser@5.30.4))(webpack-sources@3.2.3)':
+    dependencies:
+      '@nuxt/kit': 3.13.2(magicast@0.3.5)(rollup@4.21.0)(webpack-sources@3.2.3)
+      '@nuxt/schema': 3.13.2(rollup@4.21.0)(webpack-sources@3.2.3)
+      execa: 7.2.0
+      vite: 5.4.7(@types/node@20.12.7)(terser@5.30.4)
+    transitivePeerDependencies:
+      - magicast
+      - rollup
+      - supports-color
+      - webpack-sources
+
   '@nuxt/devtools-wizard@1.5.0':
     dependencies:
       consola: 3.2.3
@@ -5389,10 +5406,10 @@ snapshots:
       - vue-tsc
       - webpack-sources
 
-  '@nuxthub/core@0.7.27(ioredis@5.4.1)(magicast@0.3.5)(rollup@4.21.0)(vite@5.4.7(@types/node@20.12.7)(terser@5.30.4))(webpack-sources@3.2.3)':
+  '@nuxthub/core@0.7.30(ioredis@5.4.1)(magicast@0.3.5)(rollup@4.21.0)(vite@5.4.7(@types/node@20.12.7)(terser@5.30.4))(webpack-sources@3.2.3)':
     dependencies:
-      '@cloudflare/workers-types': 4.20241004.0
-      '@nuxt/devtools-kit': 1.5.2(magicast@0.3.5)(rollup@4.21.0)(vite@5.4.7(@types/node@20.12.7)(terser@5.30.4))(webpack-sources@3.2.3)
+      '@cloudflare/workers-types': 4.20241011.0
+      '@nuxt/devtools-kit': 1.6.0(magicast@0.3.5)(rollup@4.21.0)(vite@5.4.7(@types/node@20.12.7)(terser@5.30.4))(webpack-sources@3.2.3)
       '@nuxt/kit': 3.13.2(magicast@0.3.5)(rollup@4.21.0)(webpack-sources@3.2.3)
       '@uploadthing/mime-types': 0.3.0
       citty: 0.1.6
@@ -5401,8 +5418,8 @@ snapshots:
       destr: 2.0.3
       h3: 1.13.0
       mime: 4.0.4
-      nitro-cloudflare-dev: 0.1.6
-      ofetch: 1.4.0
+      nitro-cloudflare-dev: 0.2.0
+      ofetch: 1.4.1
       pathe: 1.1.2
       pkg-types: 1.2.1
       ufo: 1.5.4
@@ -7567,7 +7584,7 @@ snapshots:
     dependencies:
       acorn: 8.12.1
       pathe: 1.1.2
-      pkg-types: 1.2.0
+      pkg-types: 1.2.1
       ufo: 1.5.4
 
   mlly@1.7.2:
@@ -7598,12 +7615,6 @@ snapshots:
   nanotar@0.1.1: {}
 
   natural-compare@1.4.0: {}
-
-  nitro-cloudflare-dev@0.1.6:
-    dependencies:
-      consola: 3.2.3
-      mlly: 1.7.2
-      pkg-types: 1.2.1
 
   nitro-cloudflare-dev@0.2.0:
     dependencies:
@@ -7896,6 +7907,12 @@ snapshots:
       ufo: 1.5.4
 
   ofetch@1.4.0:
+    dependencies:
+      destr: 2.0.3
+      node-fetch-native: 1.6.4
+      ufo: 1.5.4
+
+  ofetch@1.4.1:
     dependencies:
       destr: 2.0.3
       node-fetch-native: 1.6.4
@@ -8831,7 +8848,7 @@ snapshots:
       lru-cache: 10.4.3
       mri: 1.2.0
       node-fetch-native: 1.6.4
-      ofetch: 1.4.0
+      ofetch: 1.4.1
       ufo: 1.5.4
     optionalDependencies:
       ioredis: 5.4.1
@@ -9071,7 +9088,7 @@ snapshots:
       '@cloudflare/workerd-linux-arm64': 1.20241004.0
       '@cloudflare/workerd-windows-64': 1.20241004.0
 
-  wrangler@3.80.4(@cloudflare/workers-types@4.20241004.0):
+  wrangler@3.80.4(@cloudflare/workers-types@4.20241011.0):
     dependencies:
       '@cloudflare/kv-asset-handler': 0.3.4
       '@cloudflare/workers-shared': 0.6.0
@@ -9091,7 +9108,7 @@ snapshots:
       workerd: 1.20241004.0
       xxhash-wasm: 1.0.2
     optionalDependencies:
-      '@cloudflare/workers-types': 4.20241004.0
+      '@cloudflare/workers-types': 4.20241011.0
       fsevents: 2.3.3
     transitivePeerDependencies:
       - bufferutil
