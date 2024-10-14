@@ -1,24 +1,24 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  compatibilityDate: '2024-08-07',
-  devtools: { enabled: true },
-  experimental: { noVueServer: true },
-  routeRules: {
-    '/': { prerender: true },
-  },
   modules: ['@nuxthub/core', '@nuxt/eslint', 'nuxt-webhook-validators'],
-  eslint: {
-    config: {
-      stylistic: true,
-    },
-  },
+  devtools: { enabled: true },
   runtimeConfig: {
     github: {
       token: process.env.NUXT_GITHUB_TOKEN || '',
     },
   },
+  routeRules: {
+    '/': { prerender: true },
+  },
+  experimental: { noVueServer: true },
+  compatibilityDate: '2024-08-07',
   hub: {
     ai: true,
     kv: true,
+  },
+  eslint: {
+    config: {
+      stylistic: true,
+    },
   },
 })
