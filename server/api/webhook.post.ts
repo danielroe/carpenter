@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { H3Error } from 'h3'
+import { isError } from 'h3'
 
 export default defineEventHandler(async (event) => {
   const isValidWebhook = await isValidGithubWebhook(event)
@@ -12,12 +12,6 @@ export default defineEventHandler(async (event) => {
   const { action, issue, repository /* installation */ } = await readValidatedBody(event, githubWebhookSchema.parse)
   if (action !== 'opened') return null
 
-  const body = (issue.body || '')
-    .replace(/<!--.*?-->/g, ' ')
-    .replace(/https:\/\/stackblitz.com\/github\/nuxt\/starter/g, '')
-
-  if (body.split(' ').length > 200) return null
-
   const ai = hubAI()
 
   let analyzedIssue: z.infer<typeof analyzedIssueSchema> | null = null
@@ -28,9 +22,9 @@ export default defineEventHandler(async (event) => {
       messages: [
         {
           role: 'system',
-          content: `You are a kind, helpful open-source maintainer that answers in JSON. Here\`s the json schema you must adhere to:\n<schema>\n${JSON.stringify(responseSchema)}\n</schema>\n`,
+          content: `You are a kind, helpful open-source maintainer that answers in JSON. If the issue looks like spam (contains gibberish, nonsense, etc.), it is marked as spam. Do not mark issues as spam purely based on non-English content or bad grammar. Here\`s the json schema you must adhere to:\n<schema>\n${JSON.stringify(responseSchema)}\n</schema>\n`,
         },
-        { role: 'user', content: `# ${issue.title}\n\n${issue.body}` },
+        { role: 'user', content: `# ${issue.title}\n\n${getNormalizedIssueContent(issue.body || '')}` },
       ],
     })
 
@@ -46,10 +40,11 @@ export default defineEventHandler(async (event) => {
     analyzedIssue = analyzedIssueSchema.parse(JSON.parse(aiResponse.response.trim()))
   }
   catch (e) {
-    if (e instanceof H3Error) {
+    if (isError(e)) {
       throw e
     }
 
+    console.error('Unknown AI error', e)
     throw createError({
       statusCode: 500,
       message: 'Unknown AI error',
@@ -63,17 +58,30 @@ export default defineEventHandler(async (event) => {
   try {
     const labels: IssueLabel[] = []
 
-    if (analyzedIssue.issueType === IssueType.Bug && !analyzedIssue.reproductionProvided) {
-      labels.push(IssueLabel.NeedsReproduction)
+    if (analyzedIssue.issueType === IssueType.Spam) {
+      labels.push(IssueLabel.PossibleSpam)
+
+      promises.push($github(`repos/${repository.full_name}/issues/${issue.number}`, {
+        method: 'PATCH',
+        body: {
+          state: 'closed',
+          state_reason: 'not_planned',
+        },
+      }))
     }
-    if (analyzedIssue.issueType === IssueType.Bug && analyzedIssue.possibleRegression) {
-      labels.push(IssueLabel.PossibleRegression)
-    }
-    if (analyzedIssue.nitro) {
-      labels.push(IssueLabel.Nitro)
-    }
-    if (analyzedIssue.issueType === IssueType.Documentation) {
-      labels.push(IssueLabel.Documentation)
+    else {
+      if (analyzedIssue.issueType === IssueType.Bug && !analyzedIssue.reproductionProvided) {
+        labels.push(IssueLabel.NeedsReproduction)
+      }
+      if (analyzedIssue.issueType === IssueType.Bug && analyzedIssue.possibleRegression) {
+        labels.push(IssueLabel.PossibleRegression)
+      }
+      if (analyzedIssue.nitro) {
+        labels.push(IssueLabel.Nitro)
+      }
+      if (analyzedIssue.issueType === IssueType.Documentation) {
+        labels.push(IssueLabel.Documentation)
+      }
     }
 
     if (labels.length > 0) {
@@ -84,17 +92,17 @@ export default defineEventHandler(async (event) => {
     }
 
     // Translate non-English issue titles to English
-    if (analyzedIssue.spokenLanguage.toLowerCase() !== 'english') {
+    if (analyzedIssue.spokenLanguage !== 'en' && analyzedIssue.issueType !== IssueType.Spam) {
       await ai.run('@cf/meta/m2m100-1.2b', {
         text: issue.title,
-        source_lang: analyzedIssue.spokenLanguage.toLowerCase(),
+        source_lang: analyzedIssue.spokenLanguage,
         target_lang: 'english',
       }).then(({ translated_text }) => {
         if (!translated_text || !translated_text.trim().length) return
         promises.push($github(`repos/${repository.full_name}/issues/${issue.number}`, {
           method: 'PATCH',
           body: {
-            title: translated_text,
+            title: `[${analyzedIssue?.spokenLanguage}:translated] ${translated_text}`,
           },
         }))
       }).catch(console.error)
@@ -117,9 +125,9 @@ const responseSchema = {
   title: 'Issue Categorisation',
   type: 'object',
   properties: {
-    issueType: { type: 'string', enum: ['bug', 'feature', 'documentation'] },
+    issueType: { type: 'string', enum: ['bug', 'feature', 'documentation', 'spam'] },
     reproductionProvided: { type: 'boolean' },
-    spokenLanguage: { type: 'string' },
+    spokenLanguage: { type: 'string', comment: 'The language of the title in ISO 639-1 format. Do not include country codes, only language code.' },
     possibleRegression: {
       type: 'boolean',
       comment: 'If the issue is reported on upgrade to a new version of Nuxt, it is a possible regression.',
@@ -141,12 +149,14 @@ enum IssueLabel {
   PossibleRegression = 'possible regression',
   Nitro = 'nitro',
   Documentation = 'documentation',
+  PossibleSpam = 'spam',
 }
 
 enum IssueType {
   Bug = 'bug',
   Feature = 'feature',
   Documentation = 'documentation',
+  Spam = 'spam',
 }
 
 const githubWebhookSchema = z.object({
@@ -174,9 +184,9 @@ const aiResponseSchema = z.object({
 // TODO: generate AI model schema from this?
 const analyzedIssueSchema = z.object({
   issueType: z.nativeEnum(IssueType),
-  reproductionProvided: z.boolean(),
-  spokenLanguage: z.string(),
-  possibleRegression: z.boolean().describe('If the issue is reported on upgrade to a new version of Nuxt, it is a possible regression.'),
-  nitro: z.boolean().describe('If the issue is reported only in relation to a single deployment provider, it is possibly a Nitro issue.'),
+  reproductionProvided: z.boolean().nullable().transform(v => v ?? false),
+  spokenLanguage: z.string().transform(lang => getNormalizedLanguage(lang)).describe('The language of the title in ISO 639-1 format.'),
+  possibleRegression: z.boolean().nullable().transform(v => v ?? false).describe('If the issue is reported on upgrade to a new version of Nuxt, it is a possible regression.'),
+  nitro: z.boolean().nullable().transform(v => v ?? false).describe('If the issue is reported only in relation to a single deployment provider, it is possibly a Nitro issue.'),
 })
   .describe('Issue Categorisation')
