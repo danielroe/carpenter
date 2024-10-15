@@ -3,7 +3,7 @@ const FEATURE_REQUEST_TITLE = '### Describe the feature'
 
 // Bug report issues
 const BUG_REPORT_REPRODUCTION_TITLE = '### Reproduction'
-const BUT_REPORT_LOGS_TITLE = '### Logs'
+const BUG_REPORT_LOGS_TITLE = '### Logs'
 
 const MAX_CONTENT_LENGTH = 5000
 
@@ -28,7 +28,7 @@ export function getNormalizedIssueContent(txt: string) {
   const bugReportContentStart = text.indexOf(BUG_REPORT_REPRODUCTION_TITLE)
   if (bugReportContentStart !== -1) {
     // Exclude logs from the content, if present
-    const bugReportLogsStart = text.indexOf(BUT_REPORT_LOGS_TITLE)
+    const bugReportLogsStart = text.indexOf(BUG_REPORT_LOGS_TITLE)
     if (bugReportLogsStart !== -1) {
       return text.slice(bugReportContentStart, Math.min(bugReportLogsStart, MAX_CONTENT_LENGTH)).trim()
     }
