@@ -2,6 +2,8 @@ import { z } from 'zod'
 import { isError } from 'h3'
 
 export default defineEventHandler(async (event) => {
+  const runtimeConfig = useRuntimeConfig(event)
+
   const isValidWebhook = await isValidGithubWebhook(event)
 
   if (!import.meta.dev && !isValidWebhook) {
@@ -68,13 +70,19 @@ export default defineEventHandler(async (event) => {
     const labels: IssueLabel[] = []
 
     if (analyzedIssue.issueType === IssueType.Spam) {
-      labels.push(IssueLabel.PossibleSpam)
-
-      promises.push($github(`repos/${repository.full_name}/issues/${issue.number}`, {
-        method: 'PATCH',
+      promises.push($github('graphql', {
+        baseURL: 'https://api.github.com/',
+        method: 'POST',
         body: {
-          state: 'closed',
-          state_reason: 'not_planned',
+          query: `
+            mutation {
+              transferIssue(input: { issueId: "${issue.node_id}", repositoryId: "${runtimeConfig.github.targetRepositoryNodeId}" }) {
+                issue {
+                  number
+                }
+              }
+            }
+          `,
         },
       }))
     }
@@ -158,7 +166,6 @@ enum IssueLabel {
   PossibleRegression = 'possible regression',
   Nitro = 'nitro',
   Documentation = 'documentation',
-  PossibleSpam = 'spam',
 }
 
 enum IssueType {
@@ -174,6 +181,7 @@ const githubWebhookSchema = z.object({
     title: z.string(),
     body: z.string().nullable(),
     number: z.number(),
+    node_id: z.string(),
   }),
   repository: z.object({
     full_name: z.string(),
