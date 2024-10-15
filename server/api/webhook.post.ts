@@ -22,7 +22,7 @@ export default defineEventHandler(async (event) => {
       messages: [
         {
           role: 'system',
-          content: `You are a kind, helpful open-source maintainer that answers in JSON. If the issue looks like spam (contains gibberish, nonsense, etc.), it is marked as spam. Do not mark issues as spam purely based on non-English content or bad grammar. Here\`s the json schema you must adhere to:\n<schema>\n${JSON.stringify(responseSchema)}\n</schema>\n`,
+          content: `You are a kind, helpful open-source maintainer that answers in JSON. If the issue looks like spam (contains gibberish, nonsense, etc.), it is marked as spam. Do not mark issues as spam purely based on non-English content or bad grammar. Do not answer with anything else other than a valid JSON. Here\`s the json schema you must adhere to:\n<schema>\n${JSON.stringify(responseSchema)}\n</schema>\n`,
         },
         { role: 'user', content: `# ${issue.title}\n\n${getNormalizedIssueContent(issue.body || '')}` },
       ],
@@ -37,7 +37,16 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    analyzedIssue = analyzedIssueSchema.parse(JSON.parse(aiResponse.response.trim()))
+    try {
+      analyzedIssue = analyzedIssueSchema.parse(JSON.parse(aiResponse.response.trim()))
+    }
+    catch (e) {
+      console.error('Invalid AI response', aiResponse.response, e)
+      throw createError({
+        statusCode: 500,
+        message: 'Invalid AI response',
+      })
+    }
   }
   catch (e) {
     if (isError(e)) {
