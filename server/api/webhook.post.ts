@@ -126,7 +126,10 @@ export default defineEventHandler(async (event) => {
     }
 
     event.waitUntil(Promise.all(promises))
-    setHeader(event, 'x-assigned-labels', JSON.stringify(labels))
+    setHeaders(event, {
+      'x-assigned-labels': JSON.stringify(labels),
+      'x-analysis': JSON.stringify(analyzedIssue),
+    })
 
     return null
   }
