@@ -202,7 +202,7 @@ const aiResponseSchema = z.object({
 const analyzedIssueSchema = z.object({
   issueType: z.nativeEnum(IssueType),
   reproductionProvided: z.boolean().nullable().transform(v => v ?? false),
-  spokenLanguage: z.string().transform(lang => getNormalizedLanguage(lang)).describe('The language of the title in ISO 639-1 format.'),
+  spokenLanguage: z.string().nullable().transform(lang => getNormalizedLanguage(lang)).describe('The language of the title in ISO 639-1 format.'),
   possibleRegression: z.boolean().nullable().transform(v => v ?? false).describe('If the issue is reported on upgrade to a new version of Nuxt, it is a possible regression.'),
   nitro: z.boolean().nullable().transform(v => v ?? false).describe('If the issue is reported only in relation to a single deployment provider, it is possibly a Nitro issue.'),
 })

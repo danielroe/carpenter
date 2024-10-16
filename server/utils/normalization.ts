@@ -44,7 +44,10 @@ export function getNormalizedIssueContent(txt: string) {
  * @param lang The language code to normalize.
  * @returns The normalized language code or 'en' if the language code is not valid.
  */
-export function getNormalizedLanguage(lang: string) {
+export function getNormalizedLanguage(lang?: string | null) {
+  if (!lang) {
+    return 'en'
+  }
   const language = lang.toLowerCase().split('-')[0]
   const langRegex = /^[a-z]{2}$/
   if (!langRegex.test(language)) {
