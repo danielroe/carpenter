@@ -5,6 +5,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     github: {
       token: process.env.NUXT_GITHUB_TOKEN || '',
+      targetRepositoryNodeId: process.env.NUXT_GITHUB_TARGET_REPOSITORY_NODE_ID || '',
     },
   },
   routeRules: {

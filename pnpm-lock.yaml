@@ -20,6 +20,9 @@ importers:
       nuxt-webhook-validators:
         specifier: ^0.1.1
         version: 0.1.1(magicast@0.3.5)(rollup@4.21.0)(webpack-sources@3.2.3)
+      zod:
+        specifier: ^3.23.8
+        version: 3.23.8
     devDependencies:
       '@nuxt/eslint-config':
         specifier: ^0.6.0
