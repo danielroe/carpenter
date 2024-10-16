@@ -131,7 +131,9 @@ export default defineEventHandler(async (event) => {
       'x-analysis': JSON.stringify(analyzedIssue),
     })
 
-    return null
+    return Promise.allSettled(promises)
+
+    // return null
   }
   catch (e) {
     console.error('Error updating issue', e)
