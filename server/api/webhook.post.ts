@@ -176,7 +176,7 @@ enum IssueType {
 }
 
 const githubWebhookSchema = z.object({
-  action: z.enum(['opened']),
+  action: z.string(),
   issue: z.object({
     title: z.string(),
     body: z.string().nullable(),
