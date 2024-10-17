@@ -40,8 +40,8 @@ importers:
         specifier: ^2.1.6
         version: 2.1.6(typescript@5.6.3)
       wrangler:
-        specifier: ^3.80.5
-        version: 3.80.5(@cloudflare/workers-types@4.20241011.0)
+        specifier: ^3.81.0
+        version: 3.81.0(@cloudflare/workers-types@4.20241011.0)
 
 packages:
 
@@ -4276,8 +4276,8 @@ packages:
     engines: {node: '>=16'}
     hasBin: true
 
-  wrangler@3.80.5:
-    resolution: {integrity: sha512-BS8n54pwkk/NnkChgtuMUifP2I2SiJHgIUZqvmnVKm92pQE3ghellQx91FS5oCtWLXKlQiaToodERNfIDSti5g==}
+  wrangler@3.81.0:
+    resolution: {integrity: sha512-sa5dhLJAMmYtl/dJWDJ92sdnKj0VUC0DYBfGqbhd5xn7CDdn1oGhICDXtx2E6BNhQ1L+4d9oAcP/oQvOs5gKLA==}
     engines: {node: '>=16.17.0'}
     hasBin: true
     peerDependencies:
@@ -9083,7 +9083,7 @@ snapshots:
       '@cloudflare/workerd-linux-arm64': 1.20241011.1
       '@cloudflare/workerd-windows-64': 1.20241011.1
 
-  wrangler@3.80.5(@cloudflare/workers-types@4.20241011.0):
+  wrangler@3.81.0(@cloudflare/workers-types@4.20241011.0):
     dependencies:
       '@cloudflare/kv-asset-handler': 0.3.4
       '@cloudflare/workers-shared': 0.6.0
