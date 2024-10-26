@@ -12,8 +12,8 @@ importers:
         specifier: ^0.6.0
         version: 0.6.0(eslint@9.13.0(jiti@1.21.6))(magicast@0.3.5)(rollup@4.21.0)(typescript@5.6.3)(vite@5.4.7(@types/node@20.12.7)(terser@5.30.4))(webpack-sources@3.2.3)
       '@nuxthub/core':
-        specifier: ^0.7.37
-        version: 0.7.37(ioredis@5.4.1)(magicast@0.3.5)(rollup@4.21.0)(vite@5.4.7(@types/node@20.12.7)(terser@5.30.4))(webpack-sources@3.2.3)
+        specifier: ^0.8.2
+        version: 0.8.2(ioredis@5.4.1)(magicast@0.3.5)(rollup@4.21.0)(vite@5.4.7(@types/node@20.12.7)(terser@5.30.4))(webpack-sources@3.2.3)
       nuxt:
         specifier: ^3.13.2
         version: 3.13.2(@parcel/watcher@2.4.1)(@types/node@20.12.7)(encoding@0.1.13)(eslint@9.13.0(jiti@1.21.6))(ioredis@5.4.1)(magicast@0.3.5)(optionator@0.9.3)(rollup@4.21.0)(terser@5.30.4)(typescript@5.6.3)(vite@5.4.7(@types/node@20.12.7)(terser@5.30.4))(vue-tsc@2.1.6(typescript@5.6.3))(webpack-sources@3.2.3)
@@ -1059,8 +1059,8 @@ packages:
     peerDependencies:
       vue: ^3.3.4
 
-  '@nuxthub/core@0.7.37':
-    resolution: {integrity: sha512-SOAGUsW+XGA9oghwItTYjx3CtPyKuc7OhBONeGpUMGJ26xs2dKdEW7DV+My2woW2PXBWL4N5YLfV+m5e60yfAg==}
+  '@nuxthub/core@0.8.2':
+    resolution: {integrity: sha512-C9XKgqQq0AXaH2AbCeFVFAEU14aTl0nP0g7mdtUN0c/JiQhdX1MIn70ANDUgFPVbNN5S6s8f38/OfJlXiDdpFA==}
 
   '@parcel/watcher-android-arm64@2.4.1':
     resolution: {integrity: sha512-LOi/WTbbh3aTn2RYddrO8pnapixAziFl6SMxHM69r3tvdSm94JtCenaKgk1GRg5FJ5wpMCpHeW+7yqPlvZv7kg==}
@@ -1459,8 +1459,8 @@ packages:
     peerDependencies:
       vue: '>=2.7 || >=3'
 
-  '@uploadthing/mime-types@0.3.0':
-    resolution: {integrity: sha512-jN/XFvpKTzcd3MXT/9D9oxx05scnYiSYxAXF/e6hyg377zFducRxivU/kHyYTkpUZPTmOL5q9EQbOkUsXMlSMg==}
+  '@uploadthing/mime-types@0.3.1':
+    resolution: {integrity: sha512-CaEadjn33CzPSLRaU8uL8IRv8MpW9xU5Rg/R45T5In8608dzovDDk0uQ9jzmmLYU5hHt+4v2qugcG/jirm/KEA==}
 
   '@vercel/nft@0.26.5':
     resolution: {integrity: sha512-NHxohEqad6Ra/r4lGknO52uc/GrWILXAMs1BB4401GTqww0fw1bAqzpG1XHuDO+dprg4GvsD9ZLLSsdo78p9hQ==}
@@ -5418,12 +5418,12 @@ snapshots:
       - vue-tsc
       - webpack-sources
 
-  '@nuxthub/core@0.7.37(ioredis@5.4.1)(magicast@0.3.5)(rollup@4.21.0)(vite@5.4.7(@types/node@20.12.7)(terser@5.30.4))(webpack-sources@3.2.3)':
+  '@nuxthub/core@0.8.2(ioredis@5.4.1)(magicast@0.3.5)(rollup@4.21.0)(vite@5.4.7(@types/node@20.12.7)(terser@5.30.4))(webpack-sources@3.2.3)':
     dependencies:
       '@cloudflare/workers-types': 4.20241022.0
       '@nuxt/devtools-kit': 1.6.0(magicast@0.3.5)(rollup@4.21.0)(vite@5.4.7(@types/node@20.12.7)(terser@5.30.4))(webpack-sources@3.2.3)
       '@nuxt/kit': 3.13.2(magicast@0.3.5)(rollup@4.21.0)(webpack-sources@3.2.3)
-      '@uploadthing/mime-types': 0.3.0
+      '@uploadthing/mime-types': 0.3.1
       citty: 0.1.6
       confbox: 0.1.8
       defu: 6.1.4
@@ -5839,7 +5839,7 @@ snapshots:
       unhead: 1.11.6
       vue: 3.5.7(typescript@5.6.3)
 
-  '@uploadthing/mime-types@0.3.0': {}
+  '@uploadthing/mime-types@0.3.1': {}
 
   '@vercel/nft@0.26.5(encoding@0.1.13)':
     dependencies:
