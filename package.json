@@ -16,7 +16,7 @@
     "@nuxthub/core": "^0.8.7",
     "nuxt": "^3.14.1592",
     "nuxt-webhook-validators": "^0.1.5",
-    "zod": "^3.24.0"
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "@nuxt/eslint-config": "^0.7.2",
