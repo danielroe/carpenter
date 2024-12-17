@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@nuxt/eslint": "^0.7.3",
-    "@nuxthub/core": "^0.8.9",
+    "@nuxthub/core": "^0.8.10",
     "nuxt": "^3.14.1592",
     "nuxt-webhook-validators": "^0.1.5",
     "zod": "^3.24.1"
