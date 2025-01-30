@@ -19,7 +19,7 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
-    "@nuxt/eslint-config": "^0.7.6",
+    "@nuxt/eslint-config": "^1.0.0",
     "eslint": "^9.19.0",
     "nitro-cloudflare-dev": "^0.2.1",
     "typescript": "^5.7.3",
