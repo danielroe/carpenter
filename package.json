@@ -12,7 +12,7 @@
     "typecheck": "nuxt typecheck"
   },
   "dependencies": {
-    "@nuxt/eslint": "^0.7.6",
+    "@nuxt/eslint": "^1.0.0",
     "@nuxthub/core": "^0.8.15",
     "nuxt": "^3.15.4",
     "nuxt-webhook-validators": "^0.1.5",
