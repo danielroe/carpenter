@@ -24,7 +24,7 @@
     "nitro-cloudflare-dev": "^0.2.1",
     "typescript": "^5.7.3",
     "vue-tsc": "^2.2.4",
-    "wrangler": "^3.110.0"
+    "wrangler": "^3.111.0"
   },
-  "packageManager": "pnpm@10.5.1"
+  "packageManager": "pnpm@10.5.2"
 }
