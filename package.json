@@ -15,14 +15,14 @@
     "@nuxt/eslint": "^1.1.0",
     "@nuxthub/core": "^0.8.17",
     "nuxt": "^3.15.4",
-    "nuxt-webhook-validators": "^0.1.8",
+    "nuxt-webhook-validators": "^0.1.9",
     "zod": "^3.24.2"
   },
   "devDependencies": {
     "@nuxt/eslint-config": "^1.1.0",
     "eslint": "^9.21.0",
     "nitro-cloudflare-dev": "^0.2.1",
-    "typescript": "^5.7.3",
+    "typescript": "^5.8.2",
     "vue-tsc": "^2.2.4",
     "wrangler": "^3.111.0"
   },
