@@ -23,7 +23,7 @@
     "eslint": "^9.21.0",
     "nitro-cloudflare-dev": "^0.2.1",
     "typescript": "^5.8.2",
-    "vue-tsc": "^2.2.6",
+    "vue-tsc": "^2.2.8",
     "wrangler": "^3.111.0"
   },
   "packageManager": "pnpm@10.5.2"
