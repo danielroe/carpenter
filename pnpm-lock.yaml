@@ -40,8 +40,8 @@ importers:
         specifier: ^2.2.8
         version: 2.2.8(typescript@5.8.2)
       wrangler:
-        specifier: ^3.111.0
-        version: 3.111.0(@cloudflare/workers-types@4.20250224.0)
+        specifier: ^3.112.0
+        version: 3.112.0(@cloudflare/workers-types@4.20250224.0)
 
 packages:
 
@@ -2748,8 +2748,8 @@ packages:
     resolution: {integrity: sha512-I9jwMn07Sy/IwOj3zVkVik2JTvgpaykDZEigL6Rx6N9LbMywwUSMtxET+7lVoDLLd3O3IXwJwvuuns8UB/HeAg==}
     engines: {node: '>=4'}
 
-  miniflare@3.20250214.1:
-    resolution: {integrity: sha512-NE66QV+2n9ZndaP5jgPlcVref3Arvizb+l2QqhgeXtKM5Orhi8UU2mijoiN3mHEUexKaBES2S1VubT4LDPqkxQ==}
+  miniflare@3.20250214.2:
+    resolution: {integrity: sha512-t+lT4p2lbOcKv4PS3sx1F/wcDAlbEYZCO2VooLp4H7JErWWYIi9yjD3UillC3CGOpiBahVg5nrPCoFltZf6UlA==}
     engines: {node: '>=16.13'}
     hasBin: true
 
@@ -4103,8 +4103,8 @@ packages:
     engines: {node: '>=16'}
     hasBin: true
 
-  wrangler@3.111.0:
-    resolution: {integrity: sha512-3j/Wq5aj/sCQRSmkjBLxbkIH7LCx0h2UnaxmhOplDjJmZty10lGRs/jGgaG/M/GEsDg5TJ7UHvBh3hSldgjfKg==}
+  wrangler@3.112.0:
+    resolution: {integrity: sha512-PNQWGze3ODlWwG33LPr8kNhbht3eB3L9fogv+fapk2fjaqj0kNweRapkwmvtz46ojcqWzsxmTe4nOC0hIVUfPA==}
     engines: {node: '>=16.17.0'}
     hasBin: true
     peerDependencies:
@@ -4887,7 +4887,7 @@ snapshots:
       perfect-debounce: 1.0.0
       pkg-types: 1.3.1
       scule: 1.3.0
-      semver: 7.7.0
+      semver: 7.7.1
       std-env: 3.8.0
       tinyexec: 0.3.2
       ufo: 1.5.4
@@ -4959,7 +4959,7 @@ snapshots:
       pkg-types: 1.3.1
       rc9: 2.1.2
       scule: 1.3.0
-      semver: 7.7.0
+      semver: 7.7.1
       simple-git: 3.27.0
       sirv: 3.0.0
       tinyglobby: 0.2.10
@@ -7179,7 +7179,7 @@ snapshots:
 
   min-indent@1.0.1: {}
 
-  miniflare@3.20250214.1:
+  miniflare@3.20250214.2:
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
       acorn: 8.14.0
@@ -7321,7 +7321,7 @@ snapshots:
       rollup: 4.32.1
       rollup-plugin-visualizer: 5.14.0(rollup@4.32.1)
       scule: 1.3.0
-      semver: 7.7.0
+      semver: 7.7.1
       serve-placeholder: 2.0.2
       serve-static: 1.16.2
       std-env: 3.8.0
@@ -8787,14 +8787,14 @@ snapshots:
       '@cloudflare/workerd-linux-arm64': 1.20250214.0
       '@cloudflare/workerd-windows-64': 1.20250214.0
 
-  wrangler@3.111.0(@cloudflare/workers-types@4.20250224.0):
+  wrangler@3.112.0(@cloudflare/workers-types@4.20250224.0):
     dependencies:
       '@cloudflare/kv-asset-handler': 0.3.4
       '@esbuild-plugins/node-globals-polyfill': 0.2.3(esbuild@0.17.19)
       '@esbuild-plugins/node-modules-polyfill': 0.2.2(esbuild@0.17.19)
       blake3-wasm: 2.1.5
       esbuild: 0.17.19
-      miniflare: 3.20250214.1
+      miniflare: 3.20250214.2
       path-to-regexp: 6.3.0
       unenv: 2.0.0-rc.1
       workerd: 1.20250214.0
