@@ -21,7 +21,7 @@
   "devDependencies": {
     "@nuxt/eslint-config": "^1.1.0",
     "eslint": "^9.21.0",
-    "nitro-cloudflare-dev": "^0.2.1",
+    "nitro-cloudflare-dev": "^0.2.2",
     "typescript": "^5.8.2",
     "vue-tsc": "^2.2.8",
     "wrangler": "^3.113.0"
