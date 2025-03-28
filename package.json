@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@nuxt/eslint": "^1.2.0",
-    "@nuxthub/core": "^0.8.21",
+    "@nuxthub/core": "^0.8.22",
     "nuxt": "^3.16.1",
     "nuxt-webhook-validators": "^0.1.11",
     "zod": "^3.24.2"
@@ -24,7 +24,7 @@
     "nitro-cloudflare-dev": "^0.2.2",
     "typescript": "^5.8.2",
     "vue-tsc": "^2.2.8",
-    "wrangler": "^4.5.1"
+    "wrangler": "^4.6.0"
   },
   "packageManager": "pnpm@10.7.0"
 }
