@@ -18,8 +18,8 @@ importers:
         specifier: ^3.16.2
         version: 3.16.2(@parcel/watcher@2.5.1)(@types/node@22.12.0)(db0@0.3.1)(eslint@9.24.0(jiti@2.4.2))(ioredis@5.6.0)(magicast@0.3.5)(optionator@0.9.4)(rollup@4.36.0)(terser@5.37.0)(typescript@5.8.3)(vite@6.2.4(@types/node@22.12.0)(jiti@2.4.2)(terser@5.37.0)(yaml@2.7.0))(vue-tsc@2.2.8(typescript@5.8.3))(yaml@2.7.0)
       nuxt-webhook-validators:
-        specifier: ^0.1.11
-        version: 0.1.11(magicast@0.3.5)
+        specifier: ^0.2.0
+        version: 0.2.0(magicast@0.3.5)
       zod:
         specifier: ^3.24.2
         version: 3.24.2
@@ -3082,8 +3082,8 @@ packages:
   nth-check@2.1.1:
     resolution: {integrity: sha512-lqjrjmaOoAnWfMmBPL+XNnynZh2+swxiX3WUE0s4yEHI6m+AwrK2UZOimIRl3X/4QctVqS8AiZjFqyOGrMXb/w==}
 
-  nuxt-webhook-validators@0.1.11:
-    resolution: {integrity: sha512-7Coi/XQg5M/7YB6Yb3FM4PdRLQdf+aMZ1CyFs4bkiRUgr5xzoejR7WT21Topvux6hFx/AcPn/fLf7SJBhbx1Ig==}
+  nuxt-webhook-validators@0.2.0:
+    resolution: {integrity: sha512-boy4mblKpt8NrpZiK+Uzmb4wX9c9UO2eUeUdQ5CuCVTQzhTBgWifOJC8UUjR4eH6T7UwopWFCSIOF+iQ1LN6BQ==}
 
   nuxt@3.16.2:
     resolution: {integrity: sha512-yjIC/C4HW8Pd+m0ACGliEF0HnimXYGYvUzjOsTiLQKkDDt2T+djyZ+pCl9BfhQBA8rYmnsym2jUI+ubjv1iClw==}
@@ -7510,9 +7510,9 @@ snapshots:
     dependencies:
       boolbase: 1.0.0
 
-  nuxt-webhook-validators@0.1.11(magicast@0.3.5):
+  nuxt-webhook-validators@0.2.0(magicast@0.3.5):
     dependencies:
-      '@nuxt/kit': 3.16.1(magicast@0.3.5)
+      '@nuxt/kit': 3.16.2(magicast@0.3.5)
       defu: 6.1.4
       scule: 1.3.0
     transitivePeerDependencies:
