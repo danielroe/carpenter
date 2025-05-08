@@ -63,7 +63,7 @@ async function handleIssueComment(event: H3Event, { comment, issue, repository }
       ],
     })
 
-    console.log(res)
+    setHeader(event, 'x-comment-analysis', res)
 
     const aiResponse = aiResponseSchema.parse(res)
     if (!aiResponse.response) {
@@ -162,6 +162,8 @@ async function handleIssueEdit(event: H3Event, { issue, repository }: IssuesEven
       ],
     })
 
+    setHeader(event, 'x-issue-edit-analysis', res)
+
     const aiResponse = aiResponseSchema.parse(res)
     if (!aiResponse.response) {
       console.error('Missing AI response', res)
@@ -220,7 +222,7 @@ async function handleNewIssue(event: H3Event, { action, issue, repository }: Iss
       ],
     })
 
-    console.log(res)
+    setHeader(event, 'x-ai-response', res)
 
     const aiResponse = aiResponseSchema.parse(res)
     if (!aiResponse.response) {
@@ -309,7 +311,7 @@ async function handleNewIssue(event: H3Event, { action, issue, repository }: Iss
           target_lang: 'english',
         })
 
-        console.log(res)
+        setHeader(event, 'x-translation-response', res)
 
         const { translated_text } = translationResponseSchema.parse(res)
 
