@@ -5,13 +5,11 @@ import type { H3Event } from 'h3'
 import type { IssuesEvent, IssueCommentEvent } from '@octokit/webhooks-types'
 
 export default defineEventHandler(async (event) => {
-  const isValidWebhook = await isValidGitHubWebhook(event)
-
-  if (!import.meta.dev && !isValidWebhook) {
+  if (!import.meta.dev && !(await isValidGitHubWebhook(event))) {
     throw createError({ statusCode: 401, message: 'Unauthorized: webhook is not valid' })
   }
 
-  const webhookPayload = await readValidatedBody(event, githubWebhookSchema.parse) as IssuesEvent | IssueCommentEvent
+  const webhookPayload = await readBody(event) as IssuesEvent | IssueCommentEvent
   const { action } = webhookPayload
 
   if ('comment' in webhookPayload && 'issue' in webhookPayload) {
@@ -386,47 +384,6 @@ enum IssueType {
 }
 
 // Define schemas
-const webhookIssueSchema = z.object({
-  action: z.string(),
-  issue: z.object({
-    title: z.string(),
-    body: z.string().nullable(),
-    number: z.number(),
-    node_id: z.string(),
-    state: z.enum(['open', 'closed']),
-    labels: z.array(z.object({
-      name: z.string(),
-    })).optional(),
-  }),
-  repository: z.object({
-    full_name: z.string(),
-  }),
-  installation: z.unknown().optional(),
-})
-
-const webhookIssueCommentSchema = z.object({
-  action: z.string(),
-  comment: z.object({
-    body: z.string(),
-  }),
-  issue: z.object({
-    number: z.number(),
-    state: z.enum(['open', 'closed']),
-    labels: z.array(z.object({
-      name: z.string(),
-    })).optional(),
-  }),
-  repository: z.object({
-    full_name: z.string(),
-  }),
-  installation: z.unknown().optional(),
-})
-
-const githubWebhookSchema = z.union([
-  webhookIssueSchema,
-  webhookIssueCommentSchema,
-])
-
 const aiResponseSchema = z.object({
   response: z.string().optional(),
   tool_calls: z.array(z.object({
