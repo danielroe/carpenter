@@ -61,7 +61,7 @@ async function handleIssueComment(event: H3Event, { comment, issue, repository }
       ],
     })
 
-    setHeader(event, 'x-comment-analysis', res)
+    setHeader(event, 'x-comment-analysis', JSON.stringify(res))
 
     const aiResponse = aiResponseSchema.parse(res)
     if (!aiResponse.response) {
@@ -160,7 +160,7 @@ async function handleIssueEdit(event: H3Event, { issue, repository }: IssuesEven
       ],
     })
 
-    setHeader(event, 'x-issue-edit-analysis', res)
+    setHeader(event, 'x-issue-edit-analysis', JSON.stringify(res))
 
     const aiResponse = aiResponseSchema.parse(res)
     if (!aiResponse.response) {
@@ -220,7 +220,7 @@ async function handleNewIssue(event: H3Event, { action, issue, repository }: Iss
       ],
     })
 
-    setHeader(event, 'x-ai-response', res)
+    setHeader(event, 'x-ai-response', JSON.stringify(res))
 
     const aiResponse = aiResponseSchema.parse(res)
     if (!aiResponse.response) {
@@ -309,7 +309,7 @@ async function handleNewIssue(event: H3Event, { action, issue, repository }: Iss
           target_lang: 'english',
         })
 
-        setHeader(event, 'x-translation-response', res)
+        setHeader(event, 'x-translation-response', JSON.stringify(res))
 
         const { translated_text } = translationResponseSchema.parse(res)
 
