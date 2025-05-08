@@ -335,7 +335,7 @@ const commentAnalysisSchema = {
     },
     reportsIssueReappeared: {
       type: 'boolean',
-      comment: 'Whether the comment reports that a resolved issue has reappeared or regressed.',
+      comment: 'If the issue is reported on upgrade to a new version of Nuxt, or the issue has reappeared after previously being solved, it is a possible regression.',
     },
   },
 }
