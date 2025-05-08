@@ -118,6 +118,10 @@ async function handleIssueComment(event: H3Event, { comment, issue, repository }
 }
 
 async function handleIssueEdit(event: H3Event, { issue, repository }: IssuesEvent) {
+  if (issue.user?.type === 'Bot') {
+    return
+  }
+
   const issueLabels = issue.labels?.map(label => label.name) || []
   const hasNeedsReproductionLabel = issueLabels.includes(IssueLabel.NeedsReproduction)
 
