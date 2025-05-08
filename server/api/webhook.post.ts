@@ -28,8 +28,8 @@ export default defineEventHandler(async (event) => {
 })
 
 type CommentAnalysisResult = {
-  containsReproduction: boolean
-  reportsIssueReappeared: boolean
+  containsReproduction?: boolean
+  reportsIssueReappeared?: boolean
 }
 
 async function handleIssueComment(event: H3Event, { comment, issue, repository }: IssueCommentEvent) {
@@ -56,20 +56,7 @@ async function handleIssueComment(event: H3Event, { comment, issue, repository }
 
     setHeader(event, 'x-comment-analysis', JSON.stringify(res))
 
-    const aiResponse = aiResponseSchema.parse(res)
-    if (!aiResponse.response) {
-      console.error('Missing AI response', res)
-      return null
-    }
-
-    let analysisResult: CommentAnalysisResult
-    try {
-      analysisResult = commentAnalysisSchema.parse(JSON.parse(aiResponse.response.trim()))
-    }
-    catch (e) {
-      console.error('Invalid AI response', aiResponse.response, e)
-      return null
-    }
+    const analysisResult: CommentAnalysisResult = 'response' in res ? commentAnalysisResponseSchema.parse(JSON.parse(res.response || '{}')) : {}
 
     // 1. if a comment adds a reproduction
     if (hasNeedsReproductionLabel && analysisResult.containsReproduction) {
@@ -150,20 +137,7 @@ async function handleIssueEdit(event: H3Event, { issue, repository }: IssuesEven
 
     setHeader(event, 'x-issue-edit-analysis', JSON.stringify(res))
 
-    const aiResponse = aiResponseSchema.parse(res)
-    if (!aiResponse.response) {
-      console.error('Missing AI response', res)
-      return null
-    }
-
-    let analysisResult: CommentAnalysisResult
-    try {
-      analysisResult = commentAnalysisSchema.parse(JSON.parse(aiResponse.response.trim()))
-    }
-    catch (e) {
-      console.error('Invalid AI response', aiResponse.response, e)
-      return null
-    }
+    const analysisResult: CommentAnalysisResult = 'response' in res ? commentAnalysisResponseSchema.parse(JSON.parse(res.response || '{}')) : {}
 
     if (analysisResult.containsReproduction) {
       // we can go ahead and remove the 'needs reproduction' label
@@ -351,7 +325,22 @@ const responseSchema = {
   },
 } as const
 
-const commentAnalysisSchema = z.object({
+const commentAnalysisSchema = {
+  title: 'Issue Categorisation',
+  type: 'object',
+  properties: {
+    containsReproduction: {
+      type: 'boolean',
+      comment: 'Whether the comment contains a clear reproduction of the issue.',
+    },
+    reportsIssueReappeared: {
+      type: 'boolean',
+      comment: 'Whether the comment reports that a resolved issue has reappeared or regressed.',
+    },
+  },
+}
+
+const commentAnalysisResponseSchema = z.object({
   containsReproduction: z.boolean().describe('Whether the comment contains a clear reproduction of the issue.'),
   reportsIssueReappeared: z.boolean().describe('Whether the comment reports that a resolved issue has reappeared or regressed.'),
 })
