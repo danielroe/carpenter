@@ -33,6 +33,10 @@ type CommentAnalysisResult = {
 }
 
 async function handleIssueComment(event: H3Event, { comment, issue, repository }: IssueCommentEvent) {
+  if (comment.user?.type === 'Bot') {
+    return
+  }
+
   const issueLabels = issue.labels?.map(label => label.name) || []
   const hasNeedsReproductionLabel = issueLabels.includes(IssueLabel.NeedsReproduction)
 
