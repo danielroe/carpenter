@@ -50,7 +50,7 @@ async function handleIssueComment(event: H3Event, { comment, issue, repository }
           role: 'system',
           content: `You are a kind, helpful open-source maintainer that answers in JSON. Do not answer with anything else other than a valid JSON. Here's the json schema you must adhere to:\n<schema>\n${JSON.stringify(commentAnalysisSchema)}\n</schema>\n`,
         },
-        { role: 'user', content: getNormalizedIssueContent(comment.body || '') },
+        { role: 'user', content: JSON.stringify({ body: getNormalizedIssueContent(comment.body) }) },
       ],
     })
 
@@ -144,7 +144,7 @@ async function handleIssueEdit(event: H3Event, { issue, repository }: IssuesEven
           role: 'system',
           content: `You are a kind, helpful open-source maintainer that answers in JSON. Do not answer with anything else other than a valid JSON. Here's the json schema you must adhere to:\n<schema>\n${JSON.stringify(commentAnalysisSchema)}\n</schema>\n`,
         },
-        { role: 'user', content: `# ${issue.title}\n\n${getNormalizedIssueContent(issue.body || '')}` },
+        { role: 'user', content: JSON.stringify({ title: issue.title, body: getNormalizedIssueContent(issue.body || '') }) },
       ],
     })
 
@@ -204,7 +204,7 @@ async function handleNewIssue(event: H3Event, { action, issue, repository }: Iss
           role: 'system',
           content: `You are a kind, helpful open-source maintainer that answers in JSON. If the issue looks like spam (contains gibberish, nonsense, etc.), it is marked as spam. Do not mark issues as spam purely based on non-English content or bad grammar. Do not answer with anything else other than a valid JSON. Here\`s the json schema you must adhere to:\n<schema>\n${JSON.stringify(responseSchema)}\n</schema>\n`,
         },
-        { role: 'user', content: `# ${issue.title}\n\n${getNormalizedIssueContent(issue.body || '')}` },
+        { role: 'user', content: JSON.stringify({ title: issue.title, body: getNormalizedIssueContent(issue.body || '') }) },
       ],
     })
 
