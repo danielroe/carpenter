@@ -339,10 +339,12 @@ const commentAnalysisSchema = {
   properties: {
     containsReproduction: {
       type: 'boolean',
+      required: true,
       comment: 'Whether the comment contains a clear reproduction of the issue.',
     },
     reportsIssueReappeared: {
       type: 'boolean',
+      required: true,
       comment: 'If the issue is reported on upgrade to a new version of Nuxt, or the issue has reappeared after previously being solved, it is a possible regression.',
     },
   },
