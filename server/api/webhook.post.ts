@@ -5,7 +5,7 @@ import type { H3Event } from 'h3'
 import type { IssuesEvent, IssueCommentEvent } from '@octokit/webhooks-types'
 
 export default defineEventHandler(async (event) => {
-  const isValidWebhook = await isValidGithubWebhook(event)
+  const isValidWebhook = await isValidGitHubWebhook(event)
 
   if (!import.meta.dev && !isValidWebhook) {
     throw createError({ statusCode: 401, message: 'Unauthorized: webhook is not valid' })
