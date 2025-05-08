@@ -48,16 +48,9 @@ async function handleIssueComment(event: H3Event, { comment, issue, repository }
       messages: [
         {
           role: 'system',
-          content: `You are a helpful assistant that analyzes GitHub issue comments. Answer in JSON format only. Here's the json schema you must adhere to:\n<schema>\n${JSON.stringify(commentAnalysisSchema)}\n</schema>\n`,
+          content: `You are a kind, helpful open-source maintainer that answers in JSON. Do not answer with anything else other than a valid JSON. Here's the json schema you must adhere to:\n<schema>\n${JSON.stringify(commentAnalysisSchema)}\n</schema>\n`,
         },
-        {
-          role: 'user',
-          content: `The issue is ${issue.state === 'closed' ? 'closed' : 'open'}.
-          Issue has the following labels: ${issueLabels.join(', ')}.
-          
-          Comment content:
-          ${comment.body}`,
-        },
+        { role: 'user', content: getNormalizedIssueContent(comment.body || '') },
       ],
     })
 
@@ -149,14 +142,9 @@ async function handleIssueEdit(event: H3Event, { issue, repository }: IssuesEven
       messages: [
         {
           role: 'system',
-          content: `You are a helpful assistant that analyzes GitHub issues. Answer in JSON format only. Here's the json schema you must adhere to:\n<schema>\n${JSON.stringify(commentAnalysisSchema)}\n</schema>\n`,
+          content: `You are a kind, helpful open-source maintainer that answers in JSON. Do not answer with anything else other than a valid JSON. Here's the json schema you must adhere to:\n<schema>\n${JSON.stringify(commentAnalysisSchema)}\n</schema>\n`,
         },
-        {
-          role: 'user',
-          content: `Does the following issue body contain a clear reproduction of the problem?
-          
-          ${getNormalizedIssueContent(issue.body || '')}`,
-        },
+        { role: 'user', content: `# ${issue.title}\n\n${getNormalizedIssueContent(issue.body || '')}` },
       ],
     })
 
