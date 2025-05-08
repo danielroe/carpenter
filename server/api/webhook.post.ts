@@ -341,8 +341,8 @@ const commentAnalysisSchema = {
 }
 
 const commentAnalysisResponseSchema = z.object({
-  containsReproduction: z.boolean().describe('Whether the comment contains a clear reproduction of the issue.'),
-  reportsIssueReappeared: z.boolean().describe('Whether the comment reports that a resolved issue has reappeared or regressed.'),
+  containsReproduction: z.boolean().optional(),
+  reportsIssueReappeared: z.boolean().optional(),
 })
 
 enum IssueLabel {
