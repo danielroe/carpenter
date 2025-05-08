@@ -42,7 +42,7 @@ async function handleIssueComment(event: H3Event, { comment, issue, repository }
     return
   }
 
-  const $github = useGitHubAPI(event)
+  const github = useGitHubAPI(event)
   const promises: Array<Promise<unknown>> = []
 
   try {
@@ -81,36 +81,47 @@ async function handleIssueComment(event: H3Event, { comment, issue, repository }
     // 1. if a comment adds a reproduction
     if (hasNeedsReproductionLabel && analysisResult.containsReproduction) {
       // we can go ahead and remove the 'needs reproduction' label
-      promises.push($github(`repos/${repository.full_name}/issues/${issue.number}/labels/${encodeURIComponent(IssueLabel.NeedsReproduction)}`, {
-        method: 'DELETE',
-      }))
+      promises.push(
+        github.issues.removeLabel({
+          owner: repository.owner.login,
+          repo: repository.name,
+          issue_number: issue.number,
+          name: IssueLabel.NeedsReproduction,
+        }),
+      )
       // ... plus, if issue is closed, we'll reopen it
       if (issue.state === 'closed') {
-        promises.push($github(`repos/${repository.full_name}/issues/${issue.number}`, {
-          method: 'PATCH',
-          body: {
+        promises.push(
+          github.issues.update({
+            owner: repository.owner.login,
+            repo: repository.name,
+            issue_number: issue.number,
             state: 'open',
-          },
-        }))
+          }),
+        )
       }
     }
     // 2. if a resolved issue reappears
     else if (issue.state === 'closed' && analysisResult.reportsIssueReappeared) {
       // then reopen the issue
-      promises.push($github(`repos/${repository.full_name}/issues/${issue.number}`, {
-        method: 'PATCH',
-        body: {
+      promises.push(
+        github.issues.update({
+          owner: repository.owner.login,
+          repo: repository.name,
+          issue_number: issue.number,
           state: 'open',
-        },
-      }))
+        }),
+      )
 
       // ... and add 'pending triage' and 'possible regression' labels
-      promises.push($github(`repos/${repository.full_name}/issues/${issue.number}/labels`, {
-        method: 'POST',
-        body: {
+      promises.push(
+        github.issues.addLabels({
+          owner: repository.owner.login,
+          repo: repository.name,
+          issue_number: issue.number,
           labels: [IssueLabel.PendingTriage, IssueLabel.PossibleRegression],
-        },
-      }))
+        }),
+      )
     }
 
     event.waitUntil(Promise.all(promises))
@@ -130,7 +141,7 @@ async function handleIssueEdit(event: H3Event, { issue, repository }: IssuesEven
     return null
   }
 
-  const $github = useGitHubAPI(event)
+  const github = useGitHubAPI(event)
   const promises: Array<Promise<unknown>> = []
 
   try {
@@ -166,9 +177,14 @@ async function handleIssueEdit(event: H3Event, { issue, repository }: IssuesEven
 
     if (analysisResult.containsReproduction) {
       // we can go ahead and remove the 'needs reproduction' label
-      promises.push($github(`repos/${repository.full_name}/issues/${issue.number}/labels/${encodeURIComponent(IssueLabel.NeedsReproduction)}`, {
-        method: 'DELETE',
-      }))
+      promises.push(
+        github.issues.removeLabel({
+          owner: repository.owner.login,
+          repo: repository.name,
+          issue_number: issue.number,
+          name: IssueLabel.NeedsReproduction,
+        }),
+      )
 
       event.waitUntil(Promise.all(promises))
       return Promise.allSettled(promises)
@@ -234,7 +250,7 @@ async function handleNewIssue(event: H3Event, { action, issue, repository }: Iss
     })
   }
 
-  const $github = useGitHubAPI(event)
+  const github = useGitHubAPI(event)
   const promises: Array<Promise<unknown>> = []
 
   // Update the GitHub issue
@@ -242,21 +258,17 @@ async function handleNewIssue(event: H3Event, { action, issue, repository }: Iss
     const labels: IssueLabel[] = []
 
     if (analyzedIssue.issueType === IssueType.Spam) {
-      promises.push($github('graphql', {
-        baseURL: 'https://api.github.com/',
-        method: 'POST',
-        body: {
-          query: `
-            mutation {
-              transferIssue(input: { issueId: "${issue.node_id}", repositoryId: "${runtimeConfig.github.targetRepositoryNodeId}" }) {
-                issue {
-                  number
-                }
+      promises.push(
+        github.graphql(`
+          mutation {
+            transferIssue(input: { issueId: "${issue.node_id}", repositoryId: "${runtimeConfig.github.targetRepositoryNodeId}" }) {
+              issue {
+                number
               }
             }
-          `,
-        },
-      }))
+          }
+        `),
+      )
     }
     else {
       if (analyzedIssue.issueType === IssueType.Bug && !analyzedIssue.reproductionProvided) {
@@ -274,10 +286,14 @@ async function handleNewIssue(event: H3Event, { action, issue, repository }: Iss
     }
 
     if (labels.length > 0) {
-      promises.push($github(`repos/${repository.full_name}/issues/${issue.number}/labels`, {
-        method: 'POST',
-        body: { labels },
-      }))
+      promises.push(
+        github.issues.addLabels({
+          owner: repository.owner.login,
+          repo: repository.name,
+          issue_number: issue.number,
+          labels,
+        }),
+      )
     }
 
     // Translate non-English issue titles to English
@@ -292,12 +308,14 @@ async function handleNewIssue(event: H3Event, { action, issue, repository }: Iss
         const { translated_text } = translationResponseSchema.parse(res)
 
         if (!translated_text || !translated_text.trim().length) return
-        promises.push($github(`repos/${repository.full_name}/issues/${issue.number}`, {
-          method: 'PATCH',
-          body: {
+        promises.push(
+          github.issues.update({
+            owner: repository.owner.login,
+            repo: repository.name,
+            issue_number: issue.number,
             title: `[${analyzedIssue?.spokenLanguage}:translated] ${translated_text}`,
-          },
-        }))
+          }),
+        )
       }
       catch (e) {
         console.error('Error translating issue title', e)
@@ -338,11 +356,6 @@ const responseSchema = {
     },
   },
 } as const
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-type Response = {
-  [key in keyof typeof responseSchema['properties']]: typeof responseSchema['properties'][key]['type'] extends 'string' ? 'enum' extends keyof typeof responseSchema['properties'][key] ? typeof responseSchema['properties'][key]['enum'] extends Array<infer S> ? S : string : string : typeof responseSchema['properties'][key]['type'] extends 'boolean' ? boolean : unknown
-}
 
 const commentAnalysisSchema = z.object({
   containsReproduction: z.boolean().describe('Whether the comment contains a clear reproduction of the issue.'),

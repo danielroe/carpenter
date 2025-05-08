@@ -1,21 +1,14 @@
 import type { H3Event } from 'h3'
-import type { $Fetch, NitroFetchRequest } from 'nitropack'
+import { Octokit } from '@octokit/rest'
 
 export function useGitHubAPI(event: H3Event) {
   const config = useRuntimeConfig(event)
 
-  if (import.meta.dev) {
-    return ((...args: unknown[]) => Promise.resolve(console.log(...args))) as $Fetch<unknown, NitroFetchRequest>
-  }
-
-  // Create API client with default values for readability
-  return $fetch.create({
-    baseURL: `https://api.github.com`,
-    headers: {
-      'Authorization': `Bearer ${config.github.token}`,
-      'User-Agent': 'Nuxtbot',
-      'Accept': 'application/vnd.github+json',
-      'X-GitHub-Api-Version': '2022-11-28',
-    },
+  return new Octokit({
+    auth: config.github.token,
+    userAgent: 'Nuxtbot',
+    baseUrl: 'https://api.github.com',
+    previews: [],
+    timeZone: 'UTC',
   })
 }
