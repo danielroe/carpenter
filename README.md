@@ -49,7 +49,7 @@ CLOUDFLARE_ACCOUNT_ID=<your-cloudflare-account-id>
 ```
 
 You'll also need to configure GitHub webhooks for the repository you want to monitor. Set up a webhook with the following settings:
-- **Payload URL**: `https://<your-cloudflare-worker-url>/api/github/webhook`
+- **Payload URL**: `https://<your-cloudflare-worker-url>/api/webhook`
 - **Content type**: `application/json`
 - **Secret**: `<your-webhook-secret>`
 
