@@ -28,8 +28,8 @@ export default defineEventHandler(async (event) => {
 })
 
 type CommentAnalysisResult = {
-  containsReproduction?: boolean
-  reportsIssueReappeared?: boolean
+  reproductionProvided?: boolean
+  possibleRegression?: boolean
 }
 
 async function handleIssueComment(event: H3Event, { comment, issue, repository }: IssueCommentEvent) {
@@ -63,7 +63,7 @@ async function handleIssueComment(event: H3Event, { comment, issue, repository }
     const analysisResult: CommentAnalysisResult = 'response' in res ? commentAnalysisResponseSchema.parse(JSON.parse(res.response || '{}')) : {}
 
     // 1. if a comment adds a reproduction
-    if (hasNeedsReproductionLabel && analysisResult.containsReproduction) {
+    if (hasNeedsReproductionLabel && analysisResult.reproductionProvided) {
       // we can go ahead and remove the 'needs reproduction' label
       promises.push(
         github.issues.removeLabel({
@@ -86,7 +86,7 @@ async function handleIssueComment(event: H3Event, { comment, issue, repository }
       }
     }
     // 2. if a resolved issue reappears
-    else if (issue.state === 'closed' && analysisResult.reportsIssueReappeared) {
+    else if (issue.state === 'closed' && analysisResult.possibleRegression) {
       // then reopen the issue
       promises.push(
         github.issues.update({
@@ -147,7 +147,7 @@ async function handleIssueEdit(event: H3Event, { issue, repository }: IssuesEven
 
     const analysisResult: CommentAnalysisResult = 'response' in res ? commentAnalysisResponseSchema.parse(JSON.parse(res.response || '{}')) : {}
 
-    if (analysisResult.containsReproduction) {
+    if (analysisResult.reproductionProvided) {
       // we can go ahead and remove the 'needs reproduction' label
       promises.push(
         github.issues.removeLabel({
@@ -337,22 +337,18 @@ const commentAnalysisSchema = {
   title: 'Issue Categorisation',
   type: 'object',
   properties: {
-    containsReproduction: {
+    reproductionProvided: { type: 'boolean' },
+    possibleRegression: {
       type: 'boolean',
       required: true,
-      comment: 'Whether the comment contains a clear reproduction of the issue.',
-    },
-    reportsIssueReappeared: {
-      type: 'boolean',
-      required: true,
-      comment: 'If the issue is reported on upgrade to a new version of Nuxt, or the issue has reappeared after previously being solved, it is a possible regression.',
+      comment: 'If the issue is reported or has reappeared on upgrade to a new version of Nuxt, it is a possible regression.',
     },
   },
 }
 
 const commentAnalysisResponseSchema = z.object({
-  containsReproduction: z.boolean().optional(),
-  reportsIssueReappeared: z.boolean().optional(),
+  reproductionProvided: z.boolean().optional(),
+  possibleRegression: z.boolean().optional(),
 })
 
 enum IssueLabel {
