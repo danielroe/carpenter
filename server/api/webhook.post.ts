@@ -254,9 +254,6 @@ async function handleNewIssue(event: H3Event, { action, issue, repository }: Iss
       if (analyzedIssue.nitro) {
         labels.push(IssueLabel.Nitro)
       }
-      if (analyzedIssue.issueType === IssueType.Documentation) {
-        labels.push(IssueLabel.Documentation)
-      }
     }
 
     if (labels.length > 0) {
@@ -268,6 +265,15 @@ async function handleNewIssue(event: H3Event, { action, issue, repository }: Iss
           labels,
         }),
       )
+    }
+
+    if (['documentation', 'bug', 'enhancement'].includes(analyzedIssue.issueType)) {
+      promises.push(github.issues.update({
+        owner: repository.owner.login,
+        repo: repository.name,
+        issue_number: issue.number,
+        type: analyzedIssue.issueType,
+      }))
     }
 
     // Translate non-English issue titles to English
@@ -319,7 +325,7 @@ const responseSchema = {
   title: 'Issue Categorisation',
   type: 'object',
   properties: {
-    issueType: { type: 'string', enum: ['bug', 'feature', 'documentation', 'spam'] },
+    issueType: { type: 'string', enum: ['bug', 'feature', 'documentation', 'chore', 'help-wanted', 'spam'] },
     reproductionProvided: { type: 'boolean' },
     spokenLanguage: { type: 'string', comment: 'The language of the title in ISO 639-1 format. Do not include country codes, only language code.' },
     possibleRegression: {
