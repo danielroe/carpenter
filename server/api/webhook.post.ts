@@ -12,15 +12,19 @@ export default defineEventHandler(async (event) => {
   const webhookPayload = await readBody(event) as IssuesEvent | IssueCommentEvent
   const { action } = webhookPayload
 
-  if ('comment' in webhookPayload && 'issue' in webhookPayload) {
+  if (!('issue' in webhookPayload) || 'pull_request' in webhookPayload.issue) {
+    return
+  }
+
+  if ('comment' in webhookPayload) {
     return handleIssueComment(event, webhookPayload)
   }
 
-  if ('issue' in webhookPayload && action === 'edited' && webhookPayload.issue) {
+  if (action === 'edited') {
     return handleIssueEdit(event, webhookPayload)
   }
 
-  if ('issue' in webhookPayload && action === 'opened') {
+  if (action === 'opened') {
     return handleNewIssue(event, webhookPayload)
   }
 
@@ -34,6 +38,10 @@ type CommentAnalysisResult = {
 
 async function handleIssueComment(event: H3Event, { comment, issue, repository }: IssueCommentEvent) {
   if (comment.user?.type === 'Bot') {
+    return
+  }
+
+  if ('pull_request' in issue) {
     return
   }
 
