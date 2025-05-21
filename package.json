@@ -10,6 +10,7 @@
     "deploy": "nuxthub deploy",
     "postinstall": "nuxt prepare",
     "lint": "eslint .",
+    "test": "vitest",
     "typecheck": "nuxt typecheck"
   },
   "dependencies": {
@@ -27,6 +28,7 @@
     "eslint": "^9.27.0",
     "nitro-cloudflare-dev": "^0.2.2",
     "typescript": "^5.8.3",
+    "vitest": "^3.1.4",
     "vue-tsc": "^2.2.10",
     "wrangler": "^4.15.2"
   },

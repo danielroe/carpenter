@@ -1,8 +1,10 @@
-import { z } from 'zod'
+import type { z } from 'zod'
 import { isError } from 'h3'
 import type { H3Event } from 'h3'
 
 import type { IssuesEvent, IssueCommentEvent } from '@octokit/webhooks-types'
+import { toXML } from '../utils/xml'
+import { aiResponseSchema, analyzedIssueSchema, commentAnalysisResponseSchema, commentAnalysisSchema, IssueLabel, IssueType, responseSchema, translationResponseSchema } from '../utils/schema'
 
 export default defineEventHandler(async (event) => {
   if (!import.meta.dev && !(await isValidGitHubWebhook(event))) {
@@ -60,7 +62,7 @@ async function handleIssueComment(event: H3Event, { comment, issue, repository }
       messages: [
         {
           role: 'system',
-          content: `You are a kind, helpful open-source maintainer that answers in JSON. Do not answer with anything else other than a valid JSON. Here's the json schema you must adhere to:\n<schema>\n${JSON.stringify(commentAnalysisSchema)}\n</schema>\n`,
+          content: `You categorise issues in an open source project. Reported bugs must have enough information to reproduce them, either a full code example or a link to GitHub, StackBlitz or CodeSandbox. Do not answer with anything else other than valid JSON. Here's the json schema you must adhere to:\n${toXML(commentAnalysisSchema)}\n`,
         },
         { role: 'user', content: JSON.stringify({ body: getNormalizedIssueContent(comment.body) }) },
       ],
@@ -145,7 +147,7 @@ async function handleIssueEdit(event: H3Event, { issue, repository }: IssuesEven
       messages: [
         {
           role: 'system',
-          content: `You are a kind, helpful open-source maintainer that answers in JSON. Do not answer with anything else other than a valid JSON. Here's the json schema you must adhere to:\n<schema>\n${JSON.stringify(commentAnalysisSchema)}\n</schema>\n`,
+          content: `You categorise issues in an open source project. Reported bugs must have enough information to reproduce them, either a full code example or a link to GitHub, StackBlitz or CodeSandbox. Do not answer with anything else other than valid JSON. Here's the json schema you must adhere to:\n${toXML(commentAnalysisSchema)}\n`,
         },
         { role: 'user', content: JSON.stringify({ title: issue.title, body: getNormalizedIssueContent(issue.body || '') }) },
       ],
@@ -192,7 +194,7 @@ async function handleNewIssue(event: H3Event, { action, issue, repository }: Iss
       messages: [
         {
           role: 'system',
-          content: `You are a kind, helpful open-source maintainer that answers in JSON. If the issue looks like spam (contains gibberish, nonsense, etc.), it is marked as spam. Do not mark issues as spam purely based on non-English content or bad grammar. Do not answer with anything else other than a valid JSON. Here\`s the json schema you must adhere to:\n<schema>\n${JSON.stringify(responseSchema)}\n</schema>\n`,
+          content: `You categorise issues in an open source project. Reported bugs must have enough information to reproduce them, either a full code example or a link to GitHub, StackBlitz or CodeSandbox. If the issue looks like spam (contains gibberish, nonsense, etc.), it is marked as spam. Do not mark issues as spam purely based on non-English content or bad grammar. Do not answer with anything else other than valid JSON. Here\`s the json schema you must adhere to:\n${toXML(responseSchema)}\n`,
         },
         { role: 'user', content: JSON.stringify({ title: issue.title, body: getNormalizedIssueContent(issue.body || '') }) },
       ],
@@ -328,73 +330,3 @@ async function handleNewIssue(event: H3Event, { action, issue, repository }: Iss
     })
   }
 }
-
-const responseSchema = {
-  title: 'Issue Categorisation',
-  type: 'object',
-  properties: {
-    issueType: { type: 'string', enum: ['bug', 'feature', 'documentation', 'chore', 'help-wanted', 'spam'] },
-    reproductionProvided: { type: 'boolean' },
-    spokenLanguage: { type: 'string', comment: 'The language of the title in ISO 639-1 format. Do not include country codes, only language code.' },
-    possibleRegression: {
-      type: 'boolean',
-      comment: 'If the issue is reported on upgrade to a new version of Nuxt, it is a possible regression.',
-    },
-    nitro: {
-      type: 'boolean',
-      comment: 'If the issue is reported only in relation to a single deployment provider, it is possibly a Nitro issue.',
-    },
-  },
-} as const
-
-const commentAnalysisSchema = {
-  title: 'Issue Categorisation',
-  type: 'object',
-  properties: {
-    reproductionProvided: { type: 'boolean' },
-    possibleRegression: { type: 'boolean', comment: 'If the issue has reappeared on upgrade to a new version of Nuxt, it is a possible regression.' },
-  },
-}
-
-const commentAnalysisResponseSchema = z.object({
-  reproductionProvided: z.boolean().optional(),
-  possibleRegression: z.boolean().optional(),
-})
-
-enum IssueLabel {
-  NeedsReproduction = 'needs reproduction',
-  PossibleRegression = 'possible regression',
-  PendingTriage = 'pending triage',
-  Nitro = 'nitro',
-  Documentation = 'documentation',
-}
-
-enum IssueType {
-  Bug = 'bug',
-  Feature = 'feature',
-  Documentation = 'documentation',
-  Spam = 'spam',
-}
-
-// Define schemas
-const aiResponseSchema = z.object({
-  response: z.string().optional(),
-  tool_calls: z.array(z.object({
-    name: z.string(),
-    arguments: z.unknown(),
-  })).optional(),
-})
-
-const translationResponseSchema = z.object({
-  translated_text: z.string().optional(),
-})
-
-// TODO: generate AI model schema from this?
-const analyzedIssueSchema = z.object({
-  issueType: z.nativeEnum(IssueType),
-  reproductionProvided: z.boolean().nullable().transform(v => v ?? false),
-  spokenLanguage: z.string().nullable().transform(lang => getNormalizedLanguage(lang)).describe('The language of the title in ISO 639-1 format.'),
-  possibleRegression: z.boolean().nullable().transform(v => v ?? false).describe('If the issue is reported on upgrade to a new version of Nuxt, it is a possible regression.'),
-  nitro: z.boolean().nullable().transform(v => v ?? false).describe('If the issue is reported only in relation to a single deployment provider, it is possibly a Nitro issue.'),
-})
-  .describe('Issue Categorisation')

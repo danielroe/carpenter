@@ -7,7 +7,6 @@ on:
   push:
     branches:
       - main
-      - renovate/*
 
 jobs:
   lint:
@@ -43,6 +42,8 @@ jobs:
 
       - name: 🛠 Build project
         run: pnpm build
+      - name: 🧪 Unit test
+        run: pnpm test
 
       - name: 💪 Test types
-        run: pnpm run typecheck
+        run: pnpm typecheck
