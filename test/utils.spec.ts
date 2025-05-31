@@ -19,6 +19,7 @@ describe('getLoggerProxy', () => {
   it('should not error when called with GitHub rest api methods', () => {
     vi.spyOn(console, 'log').mockImplementation(() => {})
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const github = getLoggerProxy<any>()
     github.issues.removeLabel({})
     github.issues.update({})
