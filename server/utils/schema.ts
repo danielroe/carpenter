@@ -23,7 +23,7 @@ export const commentAnalysisSchema = {
   type: 'object',
   properties: {
     reproductionProvided: { type: 'boolean' },
-    possibleRegression: { type: 'boolean', comment: 'If the issue has reappeared on upgrade to a new version of Nuxt, it is a possible regression.' },
+    possibleRegression: { type: 'boolean', comment: 'If the issue reported is a bug and the bug has reappeared on upgrade to a new version of Nuxt, it is a possible regression.' },
   },
 }
 
