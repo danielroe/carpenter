@@ -6,7 +6,7 @@ import { getLoggerProxy } from '../server/utils/proxy'
 describe('toXML', () => {
   it('should convert the comment analysis schema to XML', () => {
     const xml = toXML(commentAnalysisSchema)
-    expect(xml).toMatchInlineSnapshot(`"<schema><title>Issue Categorisation</title><type>object</type><properties><reproductionProvided><type>boolean</type></reproductionProvided><possibleRegression><type>boolean</type><comment>If the issue has reappeared on upgrade to a new version of Nuxt, it is a possible regression.</comment></possibleRegression></properties></schema>"`)
+    expect(xml).toMatchInlineSnapshot(`"<schema><title>Issue Categorisation</title><type>object</type><properties><reproductionProvided><type>boolean</type></reproductionProvided><possibleRegression><type>boolean</type><comment>If the issue reported is a bug and the bug has reappeared on upgrade to a new version of Nuxt, it is a possible regression.</comment></possibleRegression></properties></schema>"`)
   })
 
   it('should convert the response analysis schema to XML', () => {
