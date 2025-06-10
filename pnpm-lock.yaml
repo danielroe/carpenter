@@ -9,11 +9,11 @@ importers:
   .:
     dependencies:
       '@nuxt/eslint':
-        specifier: ^1.4.0
+        specifier: ^1.4.1
         version: 1.4.1(@typescript-eslint/utils@8.34.0(eslint@9.28.0(jiti@2.4.2))(typescript@5.8.3))(@vue/compiler-sfc@3.5.16)(eslint@9.28.0(jiti@2.4.2))(magicast@0.3.5)(typescript@5.8.3)(vite@6.3.5(@types/node@24.0.0)(jiti@2.4.2)(terser@5.42.0)(yaml@2.8.0))
       '@nuxthub/core':
-        specifier: ^0.8.27
-        version: 0.8.27(db0@0.3.2)(ioredis@5.6.1)(magicast@0.3.5)(vite@6.3.5(@types/node@24.0.0)(jiti@2.4.2)(terser@5.42.0)(yaml@2.8.0))
+        specifier: ^0.9.0
+        version: 0.9.0(db0@0.3.2)(ioredis@5.6.1)(magicast@0.3.5)(vite@6.3.5(@types/node@24.0.0)(jiti@2.4.2)(terser@5.42.0)(yaml@2.8.0))
       '@octokit/graphql':
         specifier: ^8.2.2
         version: 8.2.2
@@ -27,17 +27,17 @@ importers:
         specifier: ^0.2.1
         version: 0.2.1(magicast@0.3.5)
       zod:
-        specifier: ^3.25.7
+        specifier: ^3.25.57
         version: 3.25.57
     devDependencies:
       '@nuxt/eslint-config':
-        specifier: ^1.4.0
+        specifier: ^1.4.1
         version: 1.4.1(@typescript-eslint/utils@8.34.0(eslint@9.28.0(jiti@2.4.2))(typescript@5.8.3))(@vue/compiler-sfc@3.5.16)(eslint@9.28.0(jiti@2.4.2))(typescript@5.8.3)
       '@octokit/webhooks-types':
         specifier: ^7.6.1
         version: 7.6.1
       eslint:
-        specifier: ^9.27.0
+        specifier: ^9.28.0
         version: 9.28.0(jiti@2.4.2)
       nitro-cloudflare-dev:
         specifier: ^0.2.2
@@ -46,13 +46,13 @@ importers:
         specifier: ^5.8.3
         version: 5.8.3
       vitest:
-        specifier: ^3.1.4
+        specifier: ^3.2.3
         version: 3.2.3(@types/node@24.0.0)(jiti@2.4.2)(terser@5.42.0)(yaml@2.8.0)
       vue-tsc:
         specifier: ^2.2.10
         version: 2.2.10(typescript@5.8.3)
       wrangler:
-        specifier: ^4.15.2
+        specifier: ^4.19.1
         version: 4.19.1(@cloudflare/workers-types@4.20250610.0)
 
 packages:
@@ -934,8 +934,8 @@ packages:
     peerDependencies:
       vue: ^3.3.4
 
-  '@nuxthub/core@0.8.27':
-    resolution: {integrity: sha512-clQ0sa8XrG8z7c/USAKHpbYgivV5zaEfYiGfjTP7H17ySioqO+zfMsmtu87c17A7Tv0pnBAiD8btgE4YD1a/hQ==}
+  '@nuxthub/core@0.9.0':
+    resolution: {integrity: sha512-K8GkVcJn1ZoHV9xBiDrRPtBHxlzfysVEXGhdAJ/cR37B43UuWucl9pWKlA59f3VAf6lC8iR/hn3+2qlurcK9Ug==}
 
   '@octokit/auth-token@5.1.2':
     resolution: {integrity: sha512-JcQDsBdg49Yky2w2ld20IHAlwr8d/d8N6NiOXbtuoPCqzbsiJgF633mVUw3x4mo0H5ypataQIX7SFu3yy44Mpw==}
@@ -5852,7 +5852,7 @@ snapshots:
       - vue-tsc
       - yaml
 
-  '@nuxthub/core@0.8.27(db0@0.3.2)(ioredis@5.6.1)(magicast@0.3.5)(vite@6.3.5(@types/node@24.0.0)(jiti@2.4.2)(terser@5.42.0)(yaml@2.8.0))':
+  '@nuxthub/core@0.9.0(db0@0.3.2)(ioredis@5.6.1)(magicast@0.3.5)(vite@6.3.5(@types/node@24.0.0)(jiti@2.4.2)(terser@5.42.0)(yaml@2.8.0))':
     dependencies:
       '@cloudflare/workers-types': 4.20250610.0
       '@nuxt/devtools-kit': 2.5.0(magicast@0.3.5)(vite@6.3.5(@types/node@24.0.0)(jiti@2.4.2)(terser@5.42.0)(yaml@2.8.0))
