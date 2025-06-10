@@ -5,6 +5,7 @@ import type { H3Event } from 'h3'
 import type { IssuesEvent, IssueCommentEvent } from '@octokit/webhooks-types'
 import { toXML } from '../utils/xml'
 import { aiResponseSchema, analyzedIssueSchema, commentAnalysisResponseSchema, commentAnalysisSchema, IssueLabel, IssueType, responseSchema, translationResponseSchema } from '../utils/schema'
+import { isCollaboratorOrHigher } from '../utils/author-role'
 
 export default defineEventHandler(async (event) => {
   if (!import.meta.dev && !(await isValidGitHubWebhook(event))) {
@@ -97,25 +98,29 @@ async function handleIssueComment(event: H3Event, { comment, issue, repository }
     }
     // 2. if a resolved issue reappears
     else if (issue.state === 'closed' && analysisResult.possibleRegression) {
-      // then reopen the issue
-      promises.push(
-        github.issues.update({
-          owner: repository.owner.login,
-          repo: repository.name,
-          issue_number: issue.number,
-          state: 'open',
-        }),
-      )
+      // Only reopen as regression if the comment author is not a collaborator or higher
+      // Collaborators and above can explicitly reopen if needed
+      if (!isCollaboratorOrHigher(comment.author_association)) {
+        // then reopen the issue
+        promises.push(
+          github.issues.update({
+            owner: repository.owner.login,
+            repo: repository.name,
+            issue_number: issue.number,
+            state: 'open',
+          }),
+        )
 
-      // ... and add 'pending triage' and 'possible regression' labels
-      promises.push(
-        github.issues.addLabels({
-          owner: repository.owner.login,
-          repo: repository.name,
-          issue_number: issue.number,
-          labels: [IssueLabel.PendingTriage, IssueLabel.PossibleRegression],
-        }),
-      )
+        // ... and add 'pending triage' and 'possible regression' labels
+        promises.push(
+          github.issues.addLabels({
+            owner: repository.owner.login,
+            repo: repository.name,
+            issue_number: issue.number,
+            labels: [IssueLabel.PendingTriage, IssueLabel.PossibleRegression],
+          }),
+        )
+      }
     }
 
     event.waitUntil(Promise.all(promises))
