@@ -98,7 +98,6 @@ async function handleIssueComment(event: H3Event, { comment, issue, repository }
     }
     // 2. if a resolved issue reappears
     else if (issue.state === 'closed' && analysisResult.possibleRegression) {
-      // Only reopen as regression if the comment author is not a collaborator or higher
       // Collaborators and above can explicitly reopen if needed
       if (!isCollaboratorOrHigher(comment.author_association)) {
         // then reopen the issue
