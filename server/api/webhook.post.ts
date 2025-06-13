@@ -4,8 +4,9 @@ import type { H3Event } from 'h3'
 
 import type { IssuesEvent, IssueCommentEvent } from '@octokit/webhooks-types'
 import { toXML } from '../utils/xml'
-import { aiResponseSchema, analyzedIssueSchema, commentAnalysisResponseSchema, commentAnalysisSchema, IssueLabel, IssueType, responseSchema, translationResponseSchema } from '../utils/schema'
+import { aiResponseSchema, analyzedIssueSchema, commentAnalysisResponseSchema, commentAnalysisSchema, enhancedAnalysisResponseSchema, enhancedAnalysisSchema, IssueLabel, IssueType, responseSchema, translationResponseSchema } from '../utils/schema'
 import { isCollaboratorOrHigher } from '../utils/author-role'
+import { gatherEnhancedContext, wasClosedAsNotPlanned, wasClosedAsDuplicate, wasClosedAsCompleted, hasBeenReopenedMultipleTimes, buildEnhancedPromptContent } from '../utils/context'
 
 export default defineEventHandler(async (event) => {
   if (!import.meta.dev && !(await isValidGitHubWebhook(event))) {
@@ -31,12 +32,24 @@ export default defineEventHandler(async (event) => {
     return handleNewIssue(event, webhookPayload)
   }
 
+  if (action === 'closed') {
+    return handleIssueClosed(event, webhookPayload)
+  }
+
   return null
 })
 
 type CommentAnalysisResult = {
   reproductionProvided?: boolean
   possibleRegression?: boolean
+}
+
+type EnhancedAnalysisResult = {
+  reproductionProvided?: boolean
+  possibleRegression?: boolean
+  shouldReopen?: boolean
+  isDifferentFromDuplicate?: boolean
+  confidence?: 'low' | 'medium' | 'high'
 }
 
 async function handleIssueComment(event: H3Event, { comment, issue, repository }: IssueCommentEvent) {
@@ -59,19 +72,61 @@ async function handleIssueComment(event: H3Event, { comment, issue, repository }
   const promises: Array<Promise<unknown>> = []
 
   try {
-    const res = await hubAI().run('@hf/nousresearch/hermes-2-pro-mistral-7b', {
-      messages: [
-        {
-          role: 'system',
-          content: `You categorise issues in an open source project. Reported bugs must have enough information to reproduce them, either a full code example or a link to GitHub, StackBlitz or CodeSandbox. Do not answer with anything else other than valid JSON. Here's the json schema you must adhere to:\n${toXML(commentAnalysisSchema)}\n`,
-        },
-        { role: 'user', content: JSON.stringify({ body: getNormalizedIssueContent(comment.body) }) },
-      ],
-    })
+    let analysisResult: CommentAnalysisResult | EnhancedAnalysisResult = {}
 
-    setHeader(event, 'x-comment-analysis', JSON.stringify(res))
+    // For closed issues, use enhanced context analysis
+    if (issue.state === 'closed') {
+      const enhancedContext = await gatherEnhancedContext(event, issue, repository, {
+        includeComments: true,
+        maxComments: 5,
+        includeTimeline: true,
+      })
 
-    const analysisResult: CommentAnalysisResult = 'response' in res ? commentAnalysisResponseSchema.parse(JSON.parse(res.response || '{}')) : {}
+      const promptContent = buildEnhancedPromptContent(enhancedContext, true)
+
+      // Determine analysis strategy based on how the issue was closed
+      let systemPrompt = `You are analyzing a closed issue in an open source project to determine if it should be reopened based on new evidence. `
+
+      if (wasClosedAsNotPlanned(enhancedContext)) {
+        systemPrompt += `This issue was closed as 'not planned'. Consider if new evidence in comments suggests it should be reconsidered. Pay attention to issue history - if it has been closed and reopened multiple times, be more conservative about reopening. `
+      }
+      else if (wasClosedAsDuplicate(enhancedContext, issueLabels)) {
+        systemPrompt += `This issue was closed as 'duplicate'. Only suggest reopening if there's clear evidence this is a different issue than the original. `
+      }
+      else if (wasClosedAsCompleted(enhancedContext)) {
+        systemPrompt += `This issue was closed as completed. Only suggest reopening if there's evidence the issue has reappeared (possible regression). `
+      }
+
+      systemPrompt += `Do not answer with anything else other than valid JSON. Here's the JSON schema you must adhere to:\n${toXML(enhancedAnalysisSchema)}\n`
+
+      const res = await hubAI().run('@hf/nousresearch/hermes-2-pro-mistral-7b', {
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: promptContent },
+        ],
+      })
+
+      setHeader(event, 'x-enhanced-comment-analysis', JSON.stringify(res))
+      analysisResult = 'response' in res ? enhancedAnalysisResponseSchema.parse(JSON.parse(res.response || '{}')) : {}
+    }
+    else {
+      // Use original analysis for open issues
+      const res = await hubAI().run('@hf/nousresearch/hermes-2-pro-mistral-7b', {
+        messages: [
+          {
+            role: 'system',
+            content: `You categorise issues in an open source project. Reported bugs must have enough information to reproduce them, either a full code example or a link to GitHub, StackBlitz or CodeSandbox. Do not answer with anything else other than valid JSON. Here's the json schema you must adhere to:\n${toXML(commentAnalysisSchema)}\n`,
+          },
+          { role: 'user', content: JSON.stringify({ body: getNormalizedIssueContent(comment.body) }) },
+        ],
+      })
+
+      setHeader(event, 'x-comment-analysis', JSON.stringify(res))
+      analysisResult = 'response' in res ? commentAnalysisResponseSchema.parse(JSON.parse(res.response || '{}')) : {}
+    }
+
+    // Handle analysis results
+    const enhancedResult = analysisResult as EnhancedAnalysisResult
 
     // 1. if a comment adds a reproduction
     if (hasNeedsReproductionLabel && analysisResult.reproductionProvided) {
@@ -96,29 +151,43 @@ async function handleIssueComment(event: H3Event, { comment, issue, repository }
         )
       }
     }
-    // 2. if a resolved issue reappears
-    else if (issue.state === 'closed' && analysisResult.possibleRegression) {
+    // 2. if a resolved issue reappears (with enhanced logic for closed issues)
+    else if (issue.state === 'closed' && (analysisResult.possibleRegression || enhancedResult.shouldReopen)) {
+      // For duplicate issues, only reopen if clearly different
+      if (wasClosedAsDuplicate(await gatherEnhancedContext(event, issue, repository), issueLabels)
+        && !enhancedResult.isDifferentFromDuplicate) {
+        return Promise.resolve([])
+      }
+
       // Collaborators and above can explicitly reopen if needed
       if (!isCollaboratorOrHigher(comment.author_association)) {
-        // then reopen the issue
-        promises.push(
-          github.issues.update({
-            owner: repository.owner.login,
-            repo: repository.name,
-            issue_number: issue.number,
-            state: 'open',
-          }),
-        )
+        // Check confidence level for automated reopening
+        if (enhancedResult.confidence === 'high' || analysisResult.possibleRegression) {
+          // then reopen the issue
+          promises.push(
+            github.issues.update({
+              owner: repository.owner.login,
+              repo: repository.name,
+              issue_number: issue.number,
+              state: 'open',
+            }),
+          )
 
-        // ... and add 'pending triage' and 'possible regression' labels
-        promises.push(
-          github.issues.addLabels({
-            owner: repository.owner.login,
-            repo: repository.name,
-            issue_number: issue.number,
-            labels: [IssueLabel.PendingTriage, IssueLabel.PossibleRegression],
-          }),
-        )
+          // ... and add appropriate labels
+          const labelsToAdd = [IssueLabel.PendingTriage]
+          if (analysisResult.possibleRegression) {
+            labelsToAdd.push(IssueLabel.PossibleRegression)
+          }
+
+          promises.push(
+            github.issues.addLabels({
+              owner: repository.owner.login,
+              repo: repository.name,
+              issue_number: issue.number,
+              labels: labelsToAdd,
+            }),
+          )
+        }
       }
     }
 
@@ -129,6 +198,34 @@ async function handleIssueComment(event: H3Event, { comment, issue, repository }
     console.error('Error processing issue comment', e)
     return null
   }
+}
+
+async function handleIssueClosed(event: H3Event, { issue, repository }: IssuesEvent) {
+  if (issue.user?.type === 'Bot') {
+    return
+  }
+
+  const issueLabels = issue.labels?.map(label => label.name) || []
+
+  // Gather enhanced context when an issue is closed
+  const enhancedContext = await gatherEnhancedContext(event, issue, repository, {
+    includeComments: true,
+    maxComments: 10, // More comments for closed issue analysis
+    includeTimeline: true,
+  })
+
+  // Store analysis for potential future use
+  // This could be useful for learning patterns about closed issues
+  setHeader(event, 'x-closed-issue-context', JSON.stringify({
+    closedAs: issue.state_reason,
+    wasReopenedBefore: hasBeenReopenedMultipleTimes(enhancedContext),
+    commentsCount: enhancedContext.recentComments.length,
+    labels: issueLabels,
+  }))
+
+  // No immediate action needed for closed issues
+  // The enhanced context will be used when comments are added to closed issues
+  return null
 }
 
 async function handleIssueEdit(event: H3Event, { issue, repository }: IssuesEvent) {
