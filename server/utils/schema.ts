@@ -38,6 +38,7 @@ export enum IssueLabel {
   PendingTriage = 'pending triage',
   Nitro = 'nitro',
   Documentation = 'documentation',
+  Spam = 'spam',
 }
 
 export enum IssueType {

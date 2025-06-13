@@ -31,6 +31,10 @@ export default defineEventHandler(async (event) => {
     return handleNewIssue(event, webhookPayload)
   }
 
+  if (action === 'labeled') {
+    return handleIssueLabeled(event, webhookPayload)
+  }
+
   return null
 })
 
@@ -182,6 +186,46 @@ async function handleIssueEdit(event: H3Event, { issue, repository }: IssuesEven
   }
 
   return null
+}
+
+async function handleIssueLabeled(event: H3Event, payload: IssuesEvent) {
+  // Type guard to ensure this is a labeled event
+  if (payload.action !== 'labeled') {
+    return null
+  }
+
+  // TypeScript now knows this is IssuesLabeledEvent
+  const { issue, label } = payload
+
+  // Only handle when the 'spam' label is added
+  if (!label || label.name !== IssueLabel.Spam) {
+    return null
+  }
+
+  const runtimeConfig = useRuntimeConfig(event)
+  const github = useGitHubAPI(event)
+
+  try {
+    // Transfer the issue to the spam repository
+    await github.graphql(`
+      mutation {
+        transferIssue(input: { issueId: "${issue.node_id}", repositoryId: "${runtimeConfig.github.targetRepositoryNodeId}" }) {
+          issue {
+            number
+          }
+        }
+      }
+    `)
+
+    return { transferred: true, issueNumber: issue.number }
+  }
+  catch (e) {
+    console.error('Error transferring spam-labeled issue', e)
+    throw createError({
+      statusCode: 500,
+      message: 'Error transferring spam-labeled issue',
+    })
+  }
 }
 
 async function handleNewIssue(event: H3Event, { action, issue, repository }: IssuesEvent) {
