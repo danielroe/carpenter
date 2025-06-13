@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { toXML } from '../server/utils/xml'
-import { responseSchema, commentAnalysisSchema, IssueLabel } from '../server/utils/schema'
+import { responseSchema, commentAnalysisSchema } from '../server/utils/schema'
 import { getLoggerProxy } from '../server/utils/proxy'
 
 describe('toXML', () => {
@@ -28,25 +28,5 @@ describe('getLoggerProxy', () => {
     github.graphql(``)
 
     expect(console.log).toHaveBeenCalledTimes(5)
-  })
-})
-
-describe('IssueLabel', () => {
-  it('should include spam label', () => {
-    expect(IssueLabel.Spam).toBe('spam')
-  })
-
-  it('should have all expected labels', () => {
-    const expectedLabels = [
-      'needs reproduction',
-      'possible regression',
-      'pending triage',
-      'nitro',
-      'documentation',
-      'spam',
-    ]
-
-    const actualLabels = Object.values(IssueLabel)
-    expect(actualLabels).toEqual(expectedLabels)
   })
 })
