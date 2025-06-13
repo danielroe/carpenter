@@ -75,25 +75,27 @@ async function handleIssueComment(event: H3Event, { comment, issue, repository }
 
     // 1. if a comment adds a reproduction
     if (hasNeedsReproductionLabel && analysisResult.reproductionProvided) {
-      // we can go ahead and remove the 'needs reproduction' label
-      promises.push(
-        github.issues.removeLabel({
-          owner: repository.owner.login,
-          repo: repository.name,
-          issue_number: issue.number,
-          name: IssueLabel.NeedsReproduction,
-        }),
-      )
-      // ... plus, if issue is closed, we'll reopen it (but not for collaborators)
-      if (issue.state === 'closed' && !isCollaboratorOrHigher(comment.author_association)) {
+      // we can go ahead and remove the 'needs reproduction' label (but not for collaborators)
+      if (!isCollaboratorOrHigher(comment.author_association)) {
         promises.push(
-          github.issues.update({
+          github.issues.removeLabel({
             owner: repository.owner.login,
             repo: repository.name,
             issue_number: issue.number,
-            state: 'open',
+            name: IssueLabel.NeedsReproduction,
           }),
         )
+        // ... plus, if issue is closed, we'll reopen it
+        if (issue.state === 'closed') {
+          promises.push(
+            github.issues.update({
+              owner: repository.owner.login,
+              repo: repository.name,
+              issue_number: issue.number,
+              state: 'open',
+            }),
+          )
+        }
       }
     }
     // 2. if a resolved issue reappears
