@@ -7,6 +7,7 @@ import { toXML } from '../utils/xml'
 import { aiResponseSchema, analyzedIssueSchema, commentAnalysisResponseSchema, commentAnalysisSchema, enhancedAnalysisResponseSchema, enhancedAnalysisSchema, IssueLabel, IssueType, responseSchema, translationResponseSchema } from '../utils/schema'
 import { isCollaboratorOrHigher } from '../utils/author-role'
 import { gatherEnhancedContext, wasClosedAsNotPlanned, wasClosedAsDuplicate, wasClosedAsCompleted, hasBeenReopenedMultipleTimes, buildEnhancedPromptContent } from '../utils/context'
+import { transferIssueToSpam } from '../utils/issue-transfer'
 
 export default defineEventHandler(async (event) => {
   if (!import.meta.dev && !(await isValidGitHubWebhook(event))) {
@@ -36,6 +37,10 @@ export default defineEventHandler(async (event) => {
     return handleIssueClosed(event, webhookPayload)
   }
 
+  if (action === 'labeled') {
+    return handleIssueLabeled(event, webhookPayload)
+  }
+
   return null
 })
 
@@ -54,6 +59,11 @@ type EnhancedAnalysisResult = {
 
 async function handleIssueComment(event: H3Event, { comment, issue, repository }: IssueCommentEvent) {
   if (comment.user?.type === 'Bot') {
+    return
+  }
+
+  // Early return if collaborator - they can manually reopen issues if needed
+  if (isCollaboratorOrHigher(comment.author_association)) {
     return
   }
 
@@ -281,6 +291,42 @@ async function handleIssueEdit(event: H3Event, { issue, repository }: IssuesEven
   return null
 }
 
+async function handleIssueLabeled(event: H3Event, payload: IssuesEvent) {
+  // Type guard to ensure this is a labeled event
+  if (payload.action !== 'labeled') {
+    return null
+  }
+
+  // TypeScript now knows this is IssuesLabeledEvent
+  const { issue, label } = payload
+
+  // Only handle when the 'spam' label is added
+  if (!label || label.name !== IssueLabel.Spam) {
+    return null
+  }
+
+  const runtimeConfig = useRuntimeConfig(event)
+  const github = useGitHubAPI(event)
+
+  try {
+    // Transfer the issue to the spam repository
+    const result = await transferIssueToSpam(
+      github,
+      issue.node_id,
+      runtimeConfig.github.targetRepositoryNodeId,
+    )
+
+    return { transferred: true, issueNumber: result.transferredIssueNumber }
+  }
+  catch (e) {
+    console.error('Error transferring spam-labeled issue', e)
+    throw createError({
+      statusCode: 500,
+      message: 'Error transferring spam-labeled issue',
+    })
+  }
+}
+
 async function handleNewIssue(event: H3Event, { action, issue, repository }: IssuesEvent) {
   if (action !== 'opened') return null
 
@@ -344,15 +390,11 @@ async function handleNewIssue(event: H3Event, { action, issue, repository }: Iss
 
     if (analyzedIssue.issueType === IssueType.Spam) {
       promises.push(
-        github.graphql(`
-          mutation {
-            transferIssue(input: { issueId: "${issue.node_id}", repositoryId: "${runtimeConfig.github.targetRepositoryNodeId}" }) {
-              issue {
-                number
-              }
-            }
-          }
-        `),
+        transferIssueToSpam(
+          github,
+          issue.node_id,
+          runtimeConfig.github.targetRepositoryNodeId,
+        ),
       )
     }
     else {
