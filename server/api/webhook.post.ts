@@ -49,6 +49,11 @@ async function handleIssueComment(event: H3Event, { comment, issue, repository }
     return
   }
 
+  // Early return if collaborator - they can manually reopen issues if needed
+  if (isCollaboratorOrHigher(comment.author_association)) {
+    return
+  }
+
   if ('pull_request' in issue) {
     return
   }
@@ -103,28 +108,25 @@ async function handleIssueComment(event: H3Event, { comment, issue, repository }
     }
     // 2. if a resolved issue reappears
     else if (issue.state === 'closed' && analysisResult.possibleRegression) {
-      // Collaborators and above can explicitly reopen if needed
-      if (!isCollaboratorOrHigher(comment.author_association)) {
-        // then reopen the issue
-        promises.push(
-          github.issues.update({
-            owner: repository.owner.login,
-            repo: repository.name,
-            issue_number: issue.number,
-            state: 'open',
-          }),
-        )
+      // then reopen the issue
+      promises.push(
+        github.issues.update({
+          owner: repository.owner.login,
+          repo: repository.name,
+          issue_number: issue.number,
+          state: 'open',
+        }),
+      )
 
-        // ... and add 'pending triage' and 'possible regression' labels
-        promises.push(
-          github.issues.addLabels({
-            owner: repository.owner.login,
-            repo: repository.name,
-            issue_number: issue.number,
-            labels: [IssueLabel.PendingTriage, IssueLabel.PossibleRegression],
-          }),
-        )
-      }
+      // ... and add 'pending triage' and 'possible regression' labels
+      promises.push(
+        github.issues.addLabels({
+          owner: repository.owner.login,
+          repo: repository.name,
+          issue_number: issue.number,
+          labels: [IssueLabel.PendingTriage, IssueLabel.PossibleRegression],
+        }),
+      )
     }
 
     event.waitUntil(Promise.all(promises))
