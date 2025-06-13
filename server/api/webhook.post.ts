@@ -84,8 +84,8 @@ async function handleIssueComment(event: H3Event, { comment, issue, repository }
           name: IssueLabel.NeedsReproduction,
         }),
       )
-      // ... plus, if issue is closed, we'll reopen it
-      if (issue.state === 'closed') {
+      // ... plus, if issue is closed, we'll reopen it (but not for collaborators)
+      if (issue.state === 'closed' && !isCollaboratorOrHigher(comment.author_association)) {
         promises.push(
           github.issues.update({
             owner: repository.owner.login,
