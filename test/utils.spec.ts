@@ -39,13 +39,13 @@ describe('IssueLabel', () => {
   it('should have all expected labels', () => {
     const expectedLabels = [
       'needs reproduction',
-      'possible regression', 
+      'possible regression',
       'pending triage',
       'nitro',
       'documentation',
-      'spam'
+      'spam',
     ]
-    
+
     const actualLabels = Object.values(IssueLabel)
     expect(actualLabels).toEqual(expectedLabels)
   })
