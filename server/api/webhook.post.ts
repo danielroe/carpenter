@@ -6,6 +6,7 @@ import type { IssuesEvent, IssueCommentEvent } from '@octokit/webhooks-types'
 import { toXML } from '../utils/xml'
 import { aiResponseSchema, analyzedIssueSchema, commentAnalysisResponseSchema, commentAnalysisSchema, IssueLabel, IssueType, responseSchema, translationResponseSchema } from '../utils/schema'
 import { isCollaboratorOrHigher } from '../utils/author-role'
+import { transferIssueToSpam } from '../utils/issue-transfer'
 
 export default defineEventHandler(async (event) => {
   if (!import.meta.dev && !(await isValidGitHubWebhook(event))) {
@@ -207,17 +208,13 @@ async function handleIssueLabeled(event: H3Event, payload: IssuesEvent) {
 
   try {
     // Transfer the issue to the spam repository
-    await github.graphql(`
-      mutation {
-        transferIssue(input: { issueId: "${issue.node_id}", repositoryId: "${runtimeConfig.github.targetRepositoryNodeId}" }) {
-          issue {
-            number
-          }
-        }
-      }
-    `)
+    const result = await transferIssueToSpam(
+      github,
+      issue.node_id,
+      runtimeConfig.github.targetRepositoryNodeId,
+    )
 
-    return { transferred: true, issueNumber: issue.number }
+    return { transferred: true, issueNumber: result.transferredIssueNumber }
   }
   catch (e) {
     console.error('Error transferring spam-labeled issue', e)
@@ -291,15 +288,11 @@ async function handleNewIssue(event: H3Event, { action, issue, repository }: Iss
 
     if (analyzedIssue.issueType === IssueType.Spam) {
       promises.push(
-        github.graphql(`
-          mutation {
-            transferIssue(input: { issueId: "${issue.node_id}", repositoryId: "${runtimeConfig.github.targetRepositoryNodeId}" }) {
-              issue {
-                number
-              }
-            }
-          }
-        `),
+        transferIssueToSpam(
+          github,
+          issue.node_id,
+          runtimeConfig.github.targetRepositoryNodeId,
+        ),
       )
     }
     else {
