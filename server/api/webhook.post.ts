@@ -6,7 +6,7 @@ import type { IssuesEvent, IssueCommentEvent } from '@octokit/webhooks-types'
 import { toXML } from '../utils/xml'
 import { aiResponseSchema, analyzedIssueSchema, commentAnalysisResponseSchema, commentAnalysisSchema, enhancedAnalysisResponseSchema, enhancedAnalysisSchema, IssueLabel, IssueType, responseSchema, translationResponseSchema } from '../utils/schema'
 import { isCollaboratorOrHigher } from '../utils/author-role'
-import { gatherEnhancedContext, wasClosedAsNotPlanned, wasClosedAsDuplicate, wasClosedAsCompleted, hasBeenReopenedMultipleTimes, buildEnhancedPromptContent } from '../utils/context'
+import { gatherEnhancedContext, wasClosedAsNotPlanned, wasClosedAsDuplicate, wasClosedAsCompleted, buildEnhancedPromptContent } from '../utils/context'
 import { transferIssueToSpam } from '../utils/issue-transfer'
 
 export default defineEventHandler(async (event) => {
@@ -136,8 +136,6 @@ async function handleIssueComment(event: H3Event, { comment, issue, repository }
     }
 
     // Handle analysis results
-    const enhancedResult = analysisResult as EnhancedAnalysisResult
-
     // 1. if a comment adds a reproduction
     if (hasNeedsReproductionLabel && analysisResult.reproductionProvided) {
       // we can go ahead and remove the 'needs reproduction' label
@@ -162,41 +160,49 @@ async function handleIssueComment(event: H3Event, { comment, issue, repository }
       }
     }
     // 2. if a resolved issue reappears (with enhanced logic for closed issues)
-    else if (issue.state === 'closed' && (analysisResult.possibleRegression || enhancedResult.shouldReopen)) {
-      // For duplicate issues, only reopen if clearly different
-      if (wasClosedAsDuplicate(await gatherEnhancedContext(event, issue, repository), issueLabels)
-        && !enhancedResult.isDifferentFromDuplicate) {
-        return Promise.resolve([])
-      }
+    else if (issue.state === 'closed' && analysisResult.possibleRegression) {
+      // For closed issues, we have enhanced analysis results available
+      const enhancedResult = analysisResult as EnhancedAnalysisResult
 
-      // Collaborators and above can explicitly reopen if needed
-      if (!isCollaboratorOrHigher(comment.author_association)) {
-        // Check confidence level for automated reopening
-        if (enhancedResult.confidence === 'high' || analysisResult.possibleRegression) {
-          // then reopen the issue
-          promises.push(
-            github.issues.update({
-              owner: repository.owner.login,
-              repo: repository.name,
-              issue_number: issue.number,
-              state: 'open',
-            }),
-          )
+      // Check if we should reopen based on enhanced analysis
+      const shouldReopen = enhancedResult.shouldReopen || analysisResult.possibleRegression
 
-          // ... and add appropriate labels
-          const labelsToAdd = [IssueLabel.PendingTriage]
-          if (analysisResult.possibleRegression) {
-            labelsToAdd.push(IssueLabel.PossibleRegression)
+      if (shouldReopen) {
+        // For duplicate issues, only reopen if clearly different
+        if (wasClosedAsDuplicate(await gatherEnhancedContext(event, issue, repository), issueLabels)
+          && !enhancedResult.isDifferentFromDuplicate) {
+          return Promise.resolve([])
+        }
+
+        // Collaborators and above can explicitly reopen if needed
+        if (!isCollaboratorOrHigher(comment.author_association)) {
+          // Check confidence level for automated reopening
+          if (enhancedResult.confidence === 'high' || analysisResult.possibleRegression) {
+            // then reopen the issue
+            promises.push(
+              github.issues.update({
+                owner: repository.owner.login,
+                repo: repository.name,
+                issue_number: issue.number,
+                state: 'open',
+              }),
+            )
+
+            // ... and add appropriate labels
+            const labelsToAdd = [IssueLabel.PendingTriage]
+            if (analysisResult.possibleRegression) {
+              labelsToAdd.push(IssueLabel.PossibleRegression)
+            }
+
+            promises.push(
+              github.issues.addLabels({
+                owner: repository.owner.login,
+                repo: repository.name,
+                issue_number: issue.number,
+                labels: labelsToAdd,
+              }),
+            )
           }
-
-          promises.push(
-            github.issues.addLabels({
-              owner: repository.owner.login,
-              repo: repository.name,
-              issue_number: issue.number,
-              labels: labelsToAdd,
-            }),
-          )
         }
       }
     }
@@ -210,31 +216,13 @@ async function handleIssueComment(event: H3Event, { comment, issue, repository }
   }
 }
 
-async function handleIssueClosed(event: H3Event, { issue, repository }: IssuesEvent) {
+async function handleIssueClosed(event: H3Event, { issue }: IssuesEvent) {
   if (issue.user?.type === 'Bot') {
     return
   }
 
-  const issueLabels = issue.labels?.map(label => label.name) || []
-
-  // Gather enhanced context when an issue is closed
-  const enhancedContext = await gatherEnhancedContext(event, issue, repository, {
-    includeComments: true,
-    maxComments: 10, // More comments for closed issue analysis
-    includeTimeline: true,
-  })
-
-  // Store analysis for potential future use
-  // This could be useful for learning patterns about closed issues
-  setHeader(event, 'x-closed-issue-context', JSON.stringify({
-    closedAs: issue.state_reason,
-    wasReopenedBefore: hasBeenReopenedMultipleTimes(enhancedContext),
-    commentsCount: enhancedContext.recentComments.length,
-    labels: issueLabels,
-  }))
-
   // No immediate action needed for closed issues
-  // The enhanced context will be used when comments are added to closed issues
+  // Enhanced context will be gathered when comments are added to closed issues
   return null
 }
 
