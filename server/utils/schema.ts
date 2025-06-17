@@ -27,9 +27,29 @@ export const commentAnalysisSchema = {
   },
 }
 
+export const enhancedAnalysisSchema = {
+  title: 'Enhanced Issue Analysis',
+  type: 'object',
+  properties: {
+    reproductionProvided: { type: 'boolean' },
+    possibleRegression: { type: 'boolean', comment: 'If the issue reported is a bug and the bug has reappeared on upgrade to a new version of Nuxt, it is a possible regression.' },
+    shouldReopen: { type: 'boolean', comment: 'Whether a closed issue should be reopened based on new evidence or context.' },
+    isDifferentFromDuplicate: { type: 'boolean', comment: 'For issues marked as duplicate, whether the evidence suggests this is actually a different issue.' },
+    confidence: { type: 'string', enum: ['low', 'medium', 'high'], comment: 'Confidence level in the analysis based on available context.' },
+  },
+}
+
 export const commentAnalysisResponseSchema = z.object({
   reproductionProvided: z.boolean().optional(),
   possibleRegression: z.boolean().optional(),
+})
+
+export const enhancedAnalysisResponseSchema = z.object({
+  reproductionProvided: z.boolean().optional(),
+  possibleRegression: z.boolean().optional(),
+  shouldReopen: z.boolean().optional(),
+  isDifferentFromDuplicate: z.boolean().optional(),
+  confidence: z.enum(['low', 'medium', 'high']).optional(),
 })
 
 export enum IssueLabel {
