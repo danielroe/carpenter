@@ -186,7 +186,7 @@ async function handleIssueComment(event: H3Event, { comment, issue, repository }
       }
 
       // For duplicate issues, only reopen if clearly different
-      if (wasClosedAsDuplicate(enhancedContext, issueLabels) && !enhancedResult.isDifferentFromDuplicate) {
+      if (wasClosedAsDuplicate(enhancedContext!, issueLabels) && !enhancedResult.isDifferentFromDuplicate) {
         return Promise.resolve([])
       }
 
