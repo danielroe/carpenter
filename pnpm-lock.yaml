@@ -46,13 +46,13 @@ importers:
         specifier: ^5.8.3
         version: 5.8.3
       vitest:
-        specifier: ^3.2.3
+        specifier: ^3.2.4
         version: 3.2.4(@types/node@24.0.3)(jiti@2.4.2)(terser@5.43.1)(yaml@2.8.0)
       vue-tsc:
         specifier: ^2.2.10
         version: 2.2.10(typescript@5.8.3)
       wrangler:
-        specifier: ^4.20.0
+        specifier: ^4.20.5
         version: 4.20.5(@cloudflare/workers-types@4.20250620.0)
 
 packages:
