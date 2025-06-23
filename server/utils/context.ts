@@ -14,7 +14,7 @@ export interface EnhancedContext {
   issueStateReason: string | null | undefined
   timelineEvents: Array<{
     event: string
-    createdAt: string
+    createdAt?: string
     actor?: string
   }>
 }
@@ -77,15 +77,15 @@ export async function gatherEnhancedContext(
         per_page: 20,
       })
 
-      context.timelineEvents = timelineResponse.data
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .filter((event: any) => event.event && ['closed', 'reopened', 'labeled', 'unlabeled'].includes(event.event))
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .map((event: any) => ({
-          event: event.event,
-          createdAt: event.created_at,
-          actor: event.actor?.login,
-        }))
+      for (const event of timelineResponse.data) {
+        if (event.event === 'closed' || event.event === 'reopened' || event.event === 'labeled' || event.event === 'unlabeled') {
+          context.timelineEvents.push({
+            event: event.event,
+            createdAt: 'created_at' in event ? event.created_at : undefined,
+            actor: 'actor' in event ? event.actor?.login : undefined,
+          })
+        }
+      }
     }
     catch (error) {
       console.error('Error fetching issue timeline:', error)

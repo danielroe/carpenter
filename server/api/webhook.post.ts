@@ -6,6 +6,7 @@ import type { IssuesEvent, IssueCommentEvent } from '@octokit/webhooks-types'
 import { toXML } from '../utils/xml'
 import { aiResponseSchema, analyzedIssueSchema, commentAnalysisResponseSchema, commentAnalysisSchema, enhancedAnalysisResponseSchema, enhancedAnalysisSchema, IssueLabel, IssueType, responseSchema, translationResponseSchema } from '../utils/schema'
 import { isCollaboratorOrHigher } from '../utils/author-role'
+import type { EnhancedContext } from '../utils/context'
 import { gatherEnhancedContext, wasClosedAsNotPlanned, wasClosedAsDuplicate, wasClosedAsCompleted, buildEnhancedPromptContent } from '../utils/context'
 import { transferIssueToSpam } from '../utils/issue-transfer'
 
@@ -62,7 +63,7 @@ async function analyzeClosedIssueComment(
   issue: IssueCommentEvent['issue'],
   repository: IssueCommentEvent['repository'],
   issueLabels: string[],
-): Promise<{ result: EnhancedAnalysisResult, context: any }> {
+): Promise<{ result: EnhancedAnalysisResult, context: EnhancedContext }> {
   const enhancedContext = await gatherEnhancedContext(event, issue, repository, {
     includeComments: true,
     maxComments: 5,
@@ -124,7 +125,7 @@ async function handleIssueComment(event: H3Event, { comment, issue, repository }
 
   try {
     let analysisResult: CommentAnalysisResult | EnhancedAnalysisResult
-    let enhancedContext: any = null
+    let enhancedContext: EnhancedContext | null = null
 
     // For closed issues, use enhanced context analysis
     if (issue.state === 'closed') {
