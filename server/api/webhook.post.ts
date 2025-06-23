@@ -61,8 +61,8 @@ async function analyzeClosedIssueComment(
   event: H3Event,
   issue: IssueCommentEvent['issue'],
   repository: IssueCommentEvent['repository'],
-  issueLabels: string[]
-): Promise<{ result: EnhancedAnalysisResult; context: any }> {
+  issueLabels: string[],
+): Promise<{ result: EnhancedAnalysisResult, context: any }> {
   const enhancedContext = await gatherEnhancedContext(event, issue, repository, {
     includeComments: true,
     maxComments: 5,
@@ -233,7 +233,6 @@ async function handleIssueComment(event: H3Event, { comment, issue, repository }
     return null
   }
 }
-
 
 async function handleIssueEdit(event: H3Event, { issue, repository }: IssuesEvent) {
   if (issue.user?.type === 'Bot') {
