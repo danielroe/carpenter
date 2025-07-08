@@ -4,7 +4,7 @@ export const responseSchema = {
   title: 'Issue Categorisation',
   type: 'object',
   properties: {
-    issueType: { type: 'string', enum: ['bug', 'feature', 'documentation', 'chore', 'help-wanted', 'spam'] },
+    issueType: { type: 'string', enum: ['bug', 'feature', 'documentation', 'spam'] },
     reproductionProvided: { type: 'boolean' },
     spokenLanguage: { type: 'string', comment: 'The language of the title in ISO 639-1 format. Do not include country codes, only language code.' },
     possibleRegression: {
@@ -83,7 +83,7 @@ export const translationResponseSchema = z.object({
 
 // TODO: generate AI model schema from this?
 export const analyzedIssueSchema = z.object({
-  issueType: z.string(),
+  issueType: z.nativeEnum(IssueType),
   reproductionProvided: z.boolean().nullable().optional().transform(v => v ?? false),
   spokenLanguage: z.string().nullable().optional().transform(lang => getNormalizedLanguage(lang)).describe('The language of the title in ISO 639-1 format.'),
   possibleRegression: z.boolean().nullable().optional().transform(v => v ?? false).describe('If the issue is reported on upgrade to a new version of Nuxt, it is a possible regression.'),
