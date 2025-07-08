@@ -83,10 +83,10 @@ export const translationResponseSchema = z.object({
 
 // TODO: generate AI model schema from this?
 export const analyzedIssueSchema = z.object({
-  issueType: z.nativeEnum(IssueType),
-  reproductionProvided: z.boolean().nullable().transform(v => v ?? false),
-  spokenLanguage: z.string().nullable().transform(lang => getNormalizedLanguage(lang)).describe('The language of the title in ISO 639-1 format.'),
-  possibleRegression: z.boolean().nullable().transform(v => v ?? false).describe('If the issue is reported on upgrade to a new version of Nuxt, it is a possible regression.'),
-  nitro: z.boolean().nullable().transform(v => v ?? false).describe('If the issue is reported only in relation to a single deployment provider, it is possibly a Nitro issue.'),
+  issueType: z.string(),
+  reproductionProvided: z.boolean().nullable().optional().transform(v => v ?? false),
+  spokenLanguage: z.string().nullable().optional().transform(lang => getNormalizedLanguage(lang)).describe('The language of the title in ISO 639-1 format.'),
+  possibleRegression: z.boolean().nullable().optional().transform(v => v ?? false).describe('If the issue is reported on upgrade to a new version of Nuxt, it is a possible regression.'),
+  nitro: z.boolean().nullable().optional().transform(v => v ?? false).describe('If the issue is reported only in relation to a single deployment provider, it is possibly a Nitro issue.'),
 })
   .describe('Issue Categorisation')
