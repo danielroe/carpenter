@@ -27,8 +27,8 @@ importers:
         specifier: ^0.2.2
         version: 0.2.2(magicast@0.3.5)
       zod:
-        specifier: ^3.25.76
-        version: 3.25.76
+        specifier: ^4.0.5
+        version: 4.0.5
     devDependencies:
       '@nuxt/eslint-config':
         specifier: ^1.5.2
@@ -4887,6 +4887,9 @@ packages:
 
   zod@3.25.76:
     resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
+
+  zod@4.0.5:
+    resolution: {integrity: sha512-/5UuuRPStvHXu7RS+gmvRf4NXrNxpSllGwDnCBcJZtQsKrviYXm54yDGV2KYNLT5kq0lHGcl7lqWJLgSaG+tgA==}
 
 snapshots:
 
@@ -10210,3 +10213,5 @@ snapshots:
   zod@3.22.3: {}
 
   zod@3.25.76: {}
+
+  zod@4.0.5: {}
