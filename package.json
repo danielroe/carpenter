@@ -20,7 +20,7 @@
     "@octokit/rest": "^22.0.0",
     "nuxt": "^3.17.7",
     "nuxt-webhook-validators": "^0.2.2",
-    "zod": "^3.25.76"
+    "zod": "^4.0.5"
   },
   "devDependencies": {
     "@nuxt/eslint-config": "^1.5.2",
