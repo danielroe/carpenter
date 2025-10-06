@@ -20,7 +20,7 @@
     "@octokit/rest": "^22.0.0",
     "nuxt": "^3.19.3",
     "nuxt-webhook-validators": "^0.2.5",
-    "zod": "^4.1.11"
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@nuxt/eslint-config": "^1.9.0",
@@ -29,7 +29,7 @@
     "nitro-cloudflare-dev": "^0.2.2",
     "typescript": "^5.9.3",
     "vitest": "^3.2.4",
-    "vue-tsc": "^3.1.0",
+    "vue-tsc": "^3.1.1",
     "wrangler": "^4.42.0"
   },
   "packageManager": "pnpm@10.18.1"
