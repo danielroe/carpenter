@@ -25,12 +25,12 @@
   "devDependencies": {
     "@nuxt/eslint-config": "^1.9.0",
     "@octokit/webhooks-types": "^7.6.1",
-    "eslint": "^9.36.0",
+    "eslint": "^9.37.0",
     "nitro-cloudflare-dev": "^0.2.2",
-    "typescript": "^5.9.2",
+    "typescript": "^5.9.3",
     "vitest": "^3.2.4",
     "vue-tsc": "^3.1.0",
-    "wrangler": "^4.40.2"
+    "wrangler": "^4.42.0"
   },
-  "packageManager": "pnpm@10.17.1"
+  "packageManager": "pnpm@10.18.0"
 }
