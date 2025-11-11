@@ -5,5 +5,4 @@ ignoredBuiltDependencies:
   - unrs-resolver
 onlyBuiltDependencies:
   - workerd
-trustPolicy: no-downgrade
 
