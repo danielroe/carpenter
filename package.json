@@ -28,7 +28,7 @@
     "eslint": "^9.39.1",
     "nitro-cloudflare-dev": "^0.2.2",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.9",
+    "vitest": "^4.0.10",
     "vue-tsc": "^3.1.4",
     "wrangler": "^4.47.0"
   },
