@@ -28,9 +28,9 @@
     "eslint": "^9.39.1",
     "nitro-cloudflare-dev": "^0.2.2",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.14",
-    "vue-tsc": "^3.1.5",
-    "wrangler": "^4.51.0"
+    "vitest": "^4.0.15",
+    "vue-tsc": "^3.1.7",
+    "wrangler": "^4.53.0"
   },
   "packageManager": "pnpm@10.24.0"
 }
