@@ -14,23 +14,23 @@
     "typecheck": "nuxt typecheck"
   },
   "dependencies": {
-    "@nuxt/eslint": "^1.11.0",
-    "@nuxthub/core": "^0.9.1",
+    "@nuxt/eslint": "^1.14.0",
+    "@nuxthub/core": "^0.10.6",
     "@octokit/graphql": "^9.0.3",
     "@octokit/rest": "^22.0.1",
     "nuxt": "^3.21.0",
-    "nuxt-webhook-validators": "^0.2.5",
-    "zod": "^4.1.13"
+    "nuxt-webhook-validators": "^0.2.7",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@nuxt/eslint-config": "^1.11.0",
+    "@nuxt/eslint-config": "^1.14.0",
     "@octokit/webhooks-types": "^7.6.1",
-    "eslint": "^9.39.1",
+    "eslint": "^9.39.2",
     "nitro-cloudflare-dev": "^0.2.2",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.15",
-    "vue-tsc": "^3.1.8",
-    "wrangler": "^4.53.0"
+    "vitest": "^4.0.18",
+    "vue-tsc": "^3.2.4",
+    "wrangler": "^4.63.0"
   },
-  "packageManager": "pnpm@10.25.0"
+  "packageManager": "pnpm@10.29.1"
 }
