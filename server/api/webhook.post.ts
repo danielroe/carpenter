@@ -1,10 +1,12 @@
 import type { z } from 'zod'
 import { isError } from 'h3'
 import type { H3Event } from 'h3'
+import { generateText } from 'ai'
+import { createWorkersAI } from 'workers-ai-provider'
 
 import type { IssuesEvent, IssueCommentEvent } from '@octokit/webhooks-types'
 import { toXML } from '../utils/xml'
-import { aiResponseSchema, analyzedIssueSchema, commentAnalysisResponseSchema, commentAnalysisSchema, enhancedAnalysisResponseSchema, enhancedAnalysisSchema, IssueLabel, IssueType, responseSchema, translationResponseSchema } from '../utils/schema'
+import { analyzedIssueSchema, commentAnalysisResponseSchema, commentAnalysisSchema, enhancedAnalysisResponseSchema, enhancedAnalysisSchema, IssueLabel, IssueType, responseSchema, translationResponseSchema } from '../utils/schema'
 import { isCollaboratorOrHigher } from '../utils/author-role'
 import type { EnhancedContext } from '../utils/context'
 import { gatherEnhancedContext, wasClosedAsNotPlanned, wasClosedAsDuplicate, wasClosedAsCompleted, buildEnhancedPromptContent } from '../utils/context'
@@ -87,15 +89,17 @@ async function analyzeClosedIssueComment(
 
   systemPrompt += `Do not answer with anything else other than valid JSON. Here's the JSON schema you must adhere to:\n${toXML(enhancedAnalysisSchema)}\n`
 
-  const res = await hubAI().run('@hf/nousresearch/hermes-2-pro-mistral-7b', {
+  const workersai = createWorkersAI({ binding: event.context.cloudflare.env.AI })
+  const { text: aiText } = await generateText({
+    model: workersai('@hf/nousresearch/hermes-2-pro-mistral-7b'),
     messages: [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: promptContent },
     ],
   })
 
-  setHeader(event, 'x-enhanced-comment-analysis', JSON.stringify(res))
-  const result = 'response' in res ? enhancedAnalysisResponseSchema.parse(JSON.parse(res.response || '{}')) : {}
+  setHeader(event, 'x-enhanced-comment-analysis', aiText)
+  const result = enhancedAnalysisResponseSchema.parse(JSON.parse(aiText || '{}'))
   return { result, context: enhancedContext }
 }
 
@@ -135,7 +139,9 @@ async function handleIssueComment(event: H3Event, { comment, issue, repository }
     }
     else {
       // Use original analysis for open issues
-      const res = await hubAI().run('@hf/nousresearch/hermes-2-pro-mistral-7b', {
+      const workersai = createWorkersAI({ binding: event.context.cloudflare.env.AI })
+      const { text: aiText } = await generateText({
+        model: workersai('@hf/nousresearch/hermes-2-pro-mistral-7b'),
         messages: [
           {
             role: 'system',
@@ -145,8 +151,8 @@ async function handleIssueComment(event: H3Event, { comment, issue, repository }
         ],
       })
 
-      setHeader(event, 'x-comment-analysis', JSON.stringify(res))
-      analysisResult = 'response' in res ? commentAnalysisResponseSchema.parse(JSON.parse(res.response || '{}')) : {}
+      setHeader(event, 'x-comment-analysis', aiText)
+      analysisResult = commentAnalysisResponseSchema.parse(JSON.parse(aiText || '{}'))
     }
 
     // Handle analysis results
@@ -251,7 +257,9 @@ async function handleIssueEdit(event: H3Event, { issue, repository }: IssuesEven
   const promises: Array<Promise<unknown>> = []
 
   try {
-    const res = await hubAI().run('@hf/nousresearch/hermes-2-pro-mistral-7b', {
+    const workersai = createWorkersAI({ binding: event.context.cloudflare.env.AI })
+    const { text: aiText } = await generateText({
+      model: workersai('@hf/nousresearch/hermes-2-pro-mistral-7b'),
       messages: [
         {
           role: 'system',
@@ -261,9 +269,9 @@ async function handleIssueEdit(event: H3Event, { issue, repository }: IssuesEven
       ],
     })
 
-    setHeader(event, 'x-issue-edit-analysis', JSON.stringify(res))
+    setHeader(event, 'x-issue-edit-analysis', aiText)
 
-    const analysisResult: CommentAnalysisResult = 'response' in res ? commentAnalysisResponseSchema.parse(JSON.parse(res.response || '{}')) : {}
+    const analysisResult: CommentAnalysisResult = commentAnalysisResponseSchema.parse(JSON.parse(aiText || '{}'))
 
     if (analysisResult.reproductionProvided) {
       // we can go ahead and remove the 'needs reproduction' label
@@ -327,14 +335,15 @@ async function handleIssueLabeled(event: H3Event, payload: IssuesEvent) {
 async function handleNewIssue(event: H3Event, { action, issue, repository }: IssuesEvent) {
   if (action !== 'opened') return null
 
-  const ai = hubAI()
+  const workersai = createWorkersAI({ binding: event.context.cloudflare.env.AI })
   const runtimeConfig = useRuntimeConfig(event)
 
   let analyzedIssue: z.infer<typeof analyzedIssueSchema> | null = null
 
   // Run the AI model and parse the response
   try {
-    const res = await ai.run('@hf/nousresearch/hermes-2-pro-mistral-7b', {
+    const { text: aiText } = await generateText({
+      model: workersai('@hf/nousresearch/hermes-2-pro-mistral-7b'),
       messages: [
         {
           role: 'system',
@@ -344,11 +353,10 @@ async function handleNewIssue(event: H3Event, { action, issue, repository }: Iss
       ],
     })
 
-    setHeader(event, 'x-ai-response', JSON.stringify(res))
+    setHeader(event, 'x-ai-response', aiText)
 
-    const aiResponse = aiResponseSchema.parse(res)
-    if (!aiResponse.response) {
-      console.error('Missing AI response', res)
+    if (!aiText) {
+      console.error('Missing AI response')
       throw createError({
         statusCode: 500,
         message: 'Missing AI response',
@@ -356,10 +364,10 @@ async function handleNewIssue(event: H3Event, { action, issue, repository }: Iss
     }
 
     try {
-      analyzedIssue = analyzedIssueSchema.parse(JSON.parse(aiResponse.response.trim()))
+      analyzedIssue = analyzedIssueSchema.parse(JSON.parse(aiText.trim()))
     }
     catch (e) {
-      console.error('Invalid AI response', aiResponse.response, e)
+      console.error('Invalid AI response', aiText, e)
       throw createError({
         statusCode: 500,
         message: 'Invalid AI response',
@@ -429,6 +437,7 @@ async function handleNewIssue(event: H3Event, { action, issue, repository }: Iss
     // Translate non-English issue titles to English
     if (analyzedIssue.spokenLanguage !== 'en' && analyzedIssue.issueType !== IssueType.Spam) {
       try {
+        const ai = event.context.cloudflare.env.AI
         const res = await ai.run('@cf/meta/m2m100-1.2b', {
           text: issue.title,
           source_lang: analyzedIssue.spokenLanguage,

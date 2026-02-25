@@ -13,10 +13,7 @@ export default defineNuxtConfig({
   },
   experimental: { noVueServer: true },
   compatibilityDate: '2024-08-07',
-  hub: {
-    ai: true,
-    kv: true,
-  },
+  hub: {},
   eslint: {
     config: {
       stylistic: true,
