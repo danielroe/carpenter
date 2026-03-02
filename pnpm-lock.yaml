@@ -21,7 +21,7 @@ importers:
         specifier: ^22.0.1
         version: 22.0.1
       ai:
-        specifier: ^6.0.100
+        specifier: ^6.0.105
         version: 6.0.105(zod@4.3.6)
       nuxt:
         specifier: ^3.21.1
@@ -55,7 +55,7 @@ importers:
         specifier: ^3.2.5
         version: 3.2.5(typescript@5.9.3)
       wrangler:
-        specifier: ^4.68.1
+        specifier: ^4.69.0
         version: 4.69.0
 
 packages:
