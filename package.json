@@ -29,9 +29,9 @@
     "@octokit/webhooks-types": "^7.6.1",
     "eslint": "^10.0.3",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.18",
+    "vitest": "^4.1.0",
     "vue-tsc": "^3.2.5",
-    "wrangler": "^4.71.0"
+    "wrangler": "^4.73.0"
   },
-  "packageManager": "pnpm@10.31.0"
+  "packageManager": "pnpm@10.32.1"
 }
