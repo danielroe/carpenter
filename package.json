@@ -18,20 +18,20 @@
     "@nuxthub/core": "^0.10.7",
     "@octokit/graphql": "^9.0.3",
     "@octokit/rest": "^22.0.1",
-    "ai": "^6.0.116",
+    "ai": "^6.0.134",
     "nuxt": "^3.21.2",
     "nuxt-webhook-validators": "^0.2.7",
-    "workers-ai-provider": "^3.1.2",
+    "workers-ai-provider": "^3.1.7",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "@nuxt/eslint-config": "^1.15.2",
     "@octokit/webhooks-types": "^7.6.1",
-    "eslint": "^10.0.3",
+    "eslint": "^10.1.0",
     "typescript": "^5.9.3",
     "vitest": "^4.1.0",
-    "vue-tsc": "^3.2.5",
-    "wrangler": "^4.74.0"
+    "vue-tsc": "^3.2.6",
+    "wrangler": "^4.76.0"
   },
   "packageManager": "pnpm@10.32.1"
 }
