@@ -28,7 +28,7 @@
     "@nuxt/eslint-config": "^1.15.2",
     "@octokit/webhooks-types": "^7.6.1",
     "eslint": "^10.1.0",
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.2",
     "vitest": "^4.1.0",
     "vue-tsc": "^3.2.6",
     "wrangler": "^4.76.0"
