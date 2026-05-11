@@ -29,7 +29,7 @@
     "@octokit/webhooks-types": "^7.6.1",
     "eslint": "^10.3.0",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.5",
+    "vitest": "^4.1.6",
     "vue-tsc": "^3.2.8",
     "wrangler": "^4.90.0"
   },
