@@ -1,8 +1,6 @@
-ignoredBuiltDependencies:
-  - '@parcel/watcher'
-  - esbuild
-  - sharp
-  - unrs-resolver
-onlyBuiltDependencies:
-  - workerd
-
+allowBuilds:
+  '@parcel/watcher': false
+  esbuild: false
+  sharp: false
+  unrs-resolver: false
+  workerd: true
