@@ -18,7 +18,7 @@
     "@nuxthub/core": "^0.10.7",
     "@octokit/graphql": "^9.0.3",
     "@octokit/rest": "^22.0.1",
-    "ai": "^6.0.177",
+    "ai": "^6.0.195",
     "nuxt": "^3.21.5",
     "nuxt-webhook-validators": "^0.2.8",
     "workers-ai-provider": "^3.1.14",
@@ -27,11 +27,11 @@
   "devDependencies": {
     "@nuxt/eslint-config": "^1.15.2",
     "@octokit/webhooks-types": "^7.6.1",
-    "eslint": "^10.3.0",
+    "eslint": "^10.4.1",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.6",
-    "vue-tsc": "^3.2.8",
-    "wrangler": "^4.90.0"
+    "vitest": "^4.1.8",
+    "vue-tsc": "^3.3.3",
+    "wrangler": "^4.97.0"
   },
-  "packageManager": "pnpm@11.1.2"
+  "packageManager": "pnpm@11.5.1"
 }
