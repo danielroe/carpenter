@@ -18,7 +18,7 @@
     "@nuxthub/core": "^0.10.7",
     "@octokit/graphql": "^9.0.3",
     "@octokit/rest": "^22.0.1",
-    "ai": "^6.0.195",
+    "ai": "^6.0.197",
     "nuxt": "^3.21.7",
     "nuxt-webhook-validators": "^0.2.8",
     "workers-ai-provider": "^3.1.14",
@@ -30,8 +30,8 @@
     "eslint": "^10.4.1",
     "typescript": "^6.0.3",
     "vitest": "^4.1.8",
-    "vue-tsc": "^3.3.3",
-    "wrangler": "^4.97.0"
+    "vue-tsc": "^3.3.4",
+    "wrangler": "^4.98.0"
   },
-  "packageManager": "pnpm@11.5.1"
+  "packageManager": "pnpm@11.5.2"
 }
