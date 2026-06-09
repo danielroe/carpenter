@@ -19,7 +19,7 @@
     "@octokit/graphql": "^9.0.3",
     "@octokit/rest": "^22.0.1",
     "ai": "^6.0.197",
-    "nuxt": "^3.21.7",
+    "nuxt": "^3.21.8",
     "nuxt-webhook-validators": "^0.2.8",
     "workers-ai-provider": "^3.1.14",
     "zod": "^4.4.3"
