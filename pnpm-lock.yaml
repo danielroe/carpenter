@@ -30,8 +30,8 @@ importers:
         specifier: ^0.2.8
         version: 0.2.8(magic-string@0.30.21)(magicast@0.5.3)(oxc-parser@0.140.0)(rolldown@1.0.0-beta.57(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2))(unplugin@3.3.0(esbuild@0.27.7)(rolldown@1.0.0-beta.57(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2))(rollup@4.61.0)(vite@7.3.6(@types/node@24.3.0)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0)))
       workers-ai-provider:
-        specifier: ^3.1.14
-        version: 3.1.14(@ai-sdk/provider@4.0.1)(ai@7.0.9(zod@4.4.3))
+        specifier: ^4.0.0
+        version: 4.0.0(@ai-sdk/provider@4.0.1)(ai@7.0.9(zod@4.4.3))
       zod:
         specifier: ^4.4.3
         version: 4.4.3
@@ -5362,11 +5362,21 @@ packages:
     engines: {node: '>=16'}
     hasBin: true
 
-  workers-ai-provider@3.1.14:
-    resolution: {integrity: sha512-/umrajFP6OkZVbDAxwkrO9NPdNFG4c+i0fiVqdf4PGsLN+CiDsLJCI6xW0WXDLDR1ZZyjE4T6Xp6O/IKBIWGHQ==}
+  workers-ai-provider@4.0.0:
+    resolution: {integrity: sha512-FkhwMP1EP/MKXR8Jv1o7wLVKfTqu0h/PUaEmhZ7gyDiioib5Wsh3oPAKhG+7+SWfU3roTDHaEWlJpkJjpXu+fQ==}
     peerDependencies:
-      '@ai-sdk/provider': ^3.0.0
-      ai: ^6.0.0
+      '@ai-sdk/anthropic': ^4.0.0
+      '@ai-sdk/google': ^4.0.0
+      '@ai-sdk/openai': ^4.0.0
+      '@ai-sdk/provider': ^4.0.0
+      ai: ^7.0.0
+    peerDependenciesMeta:
+      '@ai-sdk/anthropic':
+        optional: true
+      '@ai-sdk/google':
+        optional: true
+      '@ai-sdk/openai':
+        optional: true
 
   wrangler@4.98.0:
     resolution: {integrity: sha512-cXfFUuF4rMIvE0hiMnXjEAB27ERryaCgquBJdUoPIjFzYYE1rbRdMUkEdQ18qDPUtsPvhJdqxLntixT9OfSzQw==}
@@ -11054,7 +11064,7 @@ snapshots:
       '@cloudflare/workerd-linux-arm64': 1.20260603.1
       '@cloudflare/workerd-windows-64': 1.20260603.1
 
-  workers-ai-provider@3.1.14(@ai-sdk/provider@4.0.1)(ai@7.0.9(zod@4.4.3)):
+  workers-ai-provider@4.0.0(@ai-sdk/provider@4.0.1)(ai@7.0.9(zod@4.4.3)):
     dependencies:
       '@ai-sdk/provider': 4.0.1
       ai: 7.0.9(zod@4.4.3)
