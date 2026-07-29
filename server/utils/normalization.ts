@@ -13,7 +13,7 @@ const MAX_CONTENT_LENGTH = 5000
  */
 export function getNormalizedIssueContent(txt: string) {
   const text = txt
-    .replace(/<!--.*?-->/g, ' ')
+    .replace(/<!--[\s\S]*?-->/g, ' ')
     .replace(/https:\/\/stackblitz.com\/github\/nuxt\/starter/g, '')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
