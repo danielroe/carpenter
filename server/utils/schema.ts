@@ -1,56 +1,4 @@
-import { z } from 'zod'
-
-export const responseSchema = {
-  title: 'Issue Categorisation',
-  type: 'object',
-  properties: {
-    issueType: { type: 'string', enum: ['bug', 'feature', 'documentation', 'spam'] },
-    reproductionProvided: { type: 'boolean' },
-    spokenLanguage: { type: 'string', comment: 'The language of the title in ISO 639-1 format. Do not include country codes, only language code.' },
-    possibleRegression: {
-      type: 'boolean',
-      comment: 'If the issue is reported on upgrade to a new version of Nuxt, it is a possible regression.',
-    },
-    nitro: {
-      type: 'boolean',
-      comment: 'If the issue is reported only in relation to a single deployment provider, it is possibly a Nitro issue.',
-    },
-  },
-} as const
-
-export const commentAnalysisSchema = {
-  title: 'Issue Categorisation',
-  type: 'object',
-  properties: {
-    reproductionProvided: { type: 'boolean' },
-    possibleRegression: { type: 'boolean', comment: 'If the issue reported is a bug and the bug has reappeared on upgrade to a new version of Nuxt, it is a possible regression.' },
-  },
-}
-
-export const enhancedAnalysisSchema = {
-  title: 'Enhanced Issue Analysis',
-  type: 'object',
-  properties: {
-    reproductionProvided: { type: 'boolean' },
-    possibleRegression: { type: 'boolean', comment: 'If the issue reported is a bug and the bug has reappeared on upgrade to a new version of Nuxt, it is a possible regression.' },
-    shouldReopen: { type: 'boolean', comment: 'Whether a closed issue should be reopened based on new evidence or context.' },
-    isDifferentFromDuplicate: { type: 'boolean', comment: 'For issues marked as duplicate, whether the evidence suggests this is actually a different issue.' },
-    confidence: { type: 'string', enum: ['low', 'medium', 'high'], comment: 'Confidence level in the analysis based on available context.' },
-  },
-}
-
-export const commentAnalysisResponseSchema = z.object({
-  reproductionProvided: z.boolean().optional(),
-  possibleRegression: z.boolean().optional(),
-})
-
-export const enhancedAnalysisResponseSchema = z.object({
-  reproductionProvided: z.boolean().optional(),
-  possibleRegression: z.boolean().optional(),
-  shouldReopen: z.boolean().optional(),
-  isDifferentFromDuplicate: z.boolean().optional(),
-  confidence: z.enum(['low', 'medium', 'high']).optional(),
-})
+import * as v from 'valibot'
 
 export enum IssueLabel {
   NeedsReproduction = 'needs reproduction',
@@ -59,34 +7,80 @@ export enum IssueLabel {
   Nitro = 'nitro',
   Documentation = 'documentation',
   Spam = 'spam',
+  Duplicate = 'duplicate',
 }
 
 export enum IssueType {
   Bug = 'bug',
-  Feature = 'feature',
+  Enhancement = 'enhancement',
   Documentation = 'documentation',
   Spam = 'spam',
 }
 
-// Define schemas
-export const aiResponseSchema = z.object({
-  response: z.string().optional(),
-  tool_calls: z.array(z.object({
-    name: z.string(),
-    arguments: z.unknown(),
-  })).optional(),
+export const newIssueAnalysisSchema = v.object({
+  issueType: v.pipe(
+    v.picklist(['bug', 'enhancement', 'documentation', 'spam']),
+    v.description('The type of issue. Use "enhancement" for feature requests.'),
+  ),
+  reproductionProvided: v.pipe(
+    v.boolean(),
+    v.description('Whether a reproduction is provided (GitHub repo link, StackBlitz, CodeSandbox, or a complete runnable code example).'),
+  ),
+  spokenLanguage: v.pipe(
+    v.string(),
+    v.description('The language of the issue in ISO 639-1 format (two-letter code only, no region codes).'),
+  ),
+  possibleRegression: v.pipe(
+    v.boolean(),
+    v.description('True if the issue appeared after upgrading or updating to a new version.'),
+  ),
+  nitro: v.pipe(
+    v.boolean(),
+    v.description('True if the issue is specific to a single deployment provider (Vercel, Netlify, Cloudflare, etc.).'),
+  ),
 })
 
-export const translationResponseSchema = z.object({
-  translated_text: z.string().optional(),
+export const commentAnalysisSchema = v.object({
+  reproductionProvided: v.pipe(
+    v.boolean(),
+    v.description('Whether this content provides a reproduction (GitHub repo link, StackBlitz, CodeSandbox, or a complete runnable code example).'),
+  ),
+  possibleRegression: v.pipe(
+    v.boolean(),
+    v.description('True if this content indicates the bug reappeared after an upgrade.'),
+  ),
 })
 
-// TODO: generate AI model schema from this?
-export const analyzedIssueSchema = z.object({
-  issueType: z.number().transform(v => (['bug', 'feature', 'documentation', 'spam'] satisfies Array<IssueType[keyof IssueType]>)[v]),
-  reproductionProvided: z.boolean().nullable().optional().transform(v => v ?? false),
-  spokenLanguage: z.string().nullable().optional().transform(lang => getNormalizedLanguage(lang)).describe('The language of the title in ISO 639-1 format.'),
-  possibleRegression: z.boolean().nullable().optional().transform(v => v ?? false).describe('If the issue is reported on upgrade to a new version of Nuxt, it is a possible regression.'),
-  nitro: z.boolean().nullable().optional().transform(v => v ?? false).describe('If the issue is reported only in relation to a single deployment provider, it is possibly a Nitro issue.'),
+export const enhancedAnalysisSchema = v.object({
+  reproductionProvided: v.pipe(
+    v.boolean(),
+    v.description('Whether a reproduction is provided in the issue or recent comments.'),
+  ),
+  possibleRegression: v.pipe(
+    v.boolean(),
+    v.description('True if evidence suggests a bug reappeared after an upgrade.'),
+  ),
+  shouldReopen: v.pipe(
+    v.boolean(),
+    v.description('Whether the closed issue should be reopened based on new evidence.'),
+  ),
+  isDifferentFromDuplicate: v.pipe(
+    v.boolean(),
+    v.description('For issues marked as duplicate, whether evidence suggests this is actually a different issue.'),
+  ),
+  confidence: v.pipe(
+    v.picklist(['low', 'medium', 'high']),
+    v.description('Confidence level in the analysis based on available context.'),
+  ),
 })
-  .describe('Issue Categorisation')
+
+export const translationSchema = v.object({
+  translatedTitle: v.pipe(
+    v.string(),
+    v.description('The translated title in English.'),
+  ),
+  translatedBody: v.pipe(
+    v.nullable(v.string()),
+    v.description('The translated body in English with markdown formatting, code blocks, and links kept intact. Null if no body was provided.'),
+  ),
+})

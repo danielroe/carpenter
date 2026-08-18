@@ -1,24 +1,34 @@
 import { describe, it, expect, vi } from 'vitest'
-import { toXML } from '../server/utils/xml'
-import { responseSchema, commentAnalysisSchema, enhancedAnalysisSchema } from '../server/utils/schema'
 import { getLoggerProxy } from '../server/utils/proxy'
+import { getNormalizedIssueContent, getNormalizedLanguage } from '../server/utils/normalization'
 import { wasClosedAsNotPlanned, wasClosedAsDuplicate, wasClosedAsCompleted, hasBeenReopenedMultipleTimes, buildEnhancedPromptContent } from '../server/utils/context'
 import type { EnhancedContext } from '../server/utils/context'
 
-describe('toXML', () => {
-  it('should convert the comment analysis schema to XML', () => {
-    const xml = toXML(commentAnalysisSchema)
-    expect(xml).toMatchInlineSnapshot(`"<schema><title>Issue Categorisation</title><type>object</type><properties><reproductionProvided><type>boolean</type></reproductionProvided><possibleRegression><type>boolean</type><comment>If the issue reported is a bug and the bug has reappeared on upgrade to a new version of Nuxt, it is a possible regression.</comment></possibleRegression></properties></schema>"`)
+describe('getNormalizedIssueContent', () => {
+  it('should strip HTML comments and diacritics', () => {
+    expect(getNormalizedIssueContent('<!-- template boilerplate -->héllo wörld')).toBe('hello world')
   })
 
-  it('should convert the response analysis schema to XML', () => {
-    const xml = toXML(responseSchema)
-    expect(xml).toMatchInlineSnapshot(`"<schema><title>Issue Categorisation</title><type>object</type><properties><issueType><type>string</type><enum><0>bug</0><1>feature</1><2>documentation</2><3>spam</3></enum></issueType><reproductionProvided><type>boolean</type></reproductionProvided><spokenLanguage><type>string</type><comment>The language of the title in ISO 639-1 format. Do not include country codes, only language code.</comment></spokenLanguage><possibleRegression><type>boolean</type><comment>If the issue is reported on upgrade to a new version of Nuxt, it is a possible regression.</comment></possibleRegression><nitro><type>boolean</type><comment>If the issue is reported only in relation to a single deployment provider, it is possibly a Nitro issue.</comment></nitro></properties></schema>"`)
+  it('should trim bug reports to the reproduction section, excluding logs', () => {
+    const body = 'intro\n### Reproduction\nhttps://stackblitz.com/edit/my-repro\n### Logs\nlots of logs'
+    const normalized = getNormalizedIssueContent(body)
+    expect(normalized).toContain('### Reproduction')
+    expect(normalized).toContain('my-repro')
+    expect(normalized).not.toContain('lots of logs')
   })
 
-  it('should convert the enhanced analysis schema to XML', () => {
-    const xml = toXML(enhancedAnalysisSchema)
-    expect(xml).toMatchInlineSnapshot(`"<schema><title>Enhanced Issue Analysis</title><type>object</type><properties><reproductionProvided><type>boolean</type></reproductionProvided><possibleRegression><type>boolean</type><comment>If the issue reported is a bug and the bug has reappeared on upgrade to a new version of Nuxt, it is a possible regression.</comment></possibleRegression><shouldReopen><type>boolean</type><comment>Whether a closed issue should be reopened based on new evidence or context.</comment></shouldReopen><isDifferentFromDuplicate><type>boolean</type><comment>For issues marked as duplicate, whether the evidence suggests this is actually a different issue.</comment></isDifferentFromDuplicate><confidence><type>string</type><enum><0>low</0><1>medium</1><2>high</2></enum><comment>Confidence level in the analysis based on available context.</comment></confidence></properties></schema>"`)
+  it('should trim feature requests to the relevant section', () => {
+    const body = 'noise\n### Describe the feature\nplease add this'
+    expect(getNormalizedIssueContent(body)).toBe('### Describe the feature\nplease add this')
+  })
+})
+
+describe('getNormalizedLanguage', () => {
+  it('should normalize region codes and invalid values', () => {
+    expect(getNormalizedLanguage('pt-BR')).toBe('pt')
+    expect(getNormalizedLanguage('ZH')).toBe('zh')
+    expect(getNormalizedLanguage('english')).toBe('en')
+    expect(getNormalizedLanguage(null)).toBe('en')
   })
 })
 

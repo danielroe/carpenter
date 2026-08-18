@@ -1,16 +1,12 @@
-import type { z } from 'zod'
-import { isError } from 'h3'
+import type * as v from 'valibot'
 import type { H3Event } from 'h3'
-import { generateText } from 'ai'
-import { createWorkersAI } from 'workers-ai-provider'
-
 import type { IssuesEvent, IssueCommentEvent } from '@octokit/webhooks-types'
-import { toXML } from '../utils/xml'
-import { analyzedIssueSchema, commentAnalysisResponseSchema, commentAnalysisSchema, enhancedAnalysisResponseSchema, enhancedAnalysisSchema, IssueLabel, IssueType, responseSchema, translationResponseSchema } from '../utils/schema'
+
+import { PROMPT_INJECTION_GUARD, analyzeWithAI } from '../utils/ai'
+import { newIssueAnalysisSchema, commentAnalysisSchema, enhancedAnalysisSchema, translationSchema, IssueLabel, IssueType } from '../utils/schema'
 import { isCollaboratorOrHigher } from '../utils/author-role'
-import type { EnhancedContext } from '../utils/context'
-import { gatherEnhancedContext, wasClosedAsNotPlanned, wasClosedAsDuplicate, wasClosedAsCompleted, buildEnhancedPromptContent } from '../utils/context'
-import { transferIssueToSpam } from '../utils/issue-transfer'
+import { gatherEnhancedContext, wasClosedAsNotPlanned, wasClosedAsDuplicate, wasClosedAsCompleted, hasBeenReopenedMultipleTimes, buildEnhancedPromptContent } from '../utils/context'
+import { transferIssue } from '../utils/issue-transfer'
 
 export default defineEventHandler(async (event) => {
   if (!import.meta.dev && !(await isValidGitHubWebhook(event))) {
@@ -18,7 +14,6 @@ export default defineEventHandler(async (event) => {
   }
 
   const webhookPayload = await readBody(event) as IssuesEvent | IssueCommentEvent
-  const { action } = webhookPayload
 
   if (!('issue' in webhookPayload) || 'pull_request' in webhookPayload.issue) {
     return
@@ -28,79 +23,213 @@ export default defineEventHandler(async (event) => {
     return handleIssueComment(event, webhookPayload)
   }
 
-  if (action === 'edited') {
-    return handleIssueEdit(event, webhookPayload)
-  }
-
-  if (action === 'opened') {
-    return handleNewIssue(event, webhookPayload)
-  }
-
-  if (action === 'closed') {
-    return
-  }
-
-  if (action === 'labeled') {
-    return handleIssueLabeled(event, webhookPayload)
+  switch (webhookPayload.action) {
+    case 'opened':
+      return handleNewIssue(event, webhookPayload)
+    case 'edited':
+      return handleIssueEdit(event, webhookPayload)
+    case 'labeled':
+      return handleIssueLabeled(event, webhookPayload)
   }
 
   return null
 })
 
-type CommentAnalysisResult = {
-  reproductionProvided?: boolean
-  possibleRegression?: boolean
-}
+async function handleNewIssue(event: H3Event, payload: IssuesEvent) {
+  if (payload.action !== 'opened') return null
 
-type EnhancedAnalysisResult = {
-  reproductionProvided?: boolean
-  possibleRegression?: boolean
-  shouldReopen?: boolean
-  isDifferentFromDuplicate?: boolean
-  confidence?: 'low' | 'medium' | 'high'
-}
+  const { issue, repository } = payload
 
-async function analyzeClosedIssueComment(
-  event: H3Event,
-  issue: IssueCommentEvent['issue'],
-  repository: IssueCommentEvent['repository'],
-  issueLabels: string[],
-): Promise<{ result: EnhancedAnalysisResult, context: EnhancedContext }> {
-  const enhancedContext = await gatherEnhancedContext(event, issue, repository, {
-    includeComments: true,
-    maxComments: 5,
-    includeTimeline: true,
+  if (issue.user?.type === 'Bot') {
+    return null
+  }
+
+  const runtimeConfig = useRuntimeConfig(event)
+  const github = useGitHubAPI(event)
+
+  const analysis = await analyzeWithAI(event, {
+    tier: 'simple',
+    schema: newIssueAnalysisSchema,
+    system: `You categorise issues in an open source project (${runtimeConfig.triage.projectName}).
+
+Guidelines:
+- Reported bugs MUST have reproduction information (GitHub repo link, StackBlitz, CodeSandbox, or a complete code example)
+- Mark as spam ONLY if content is gibberish or nonsense. Do NOT mark as spam based on non-English content, poor grammar, or short/terse descriptions
+- "enhancement" is for feature requests, "documentation" is for docs improvements, "bug" is for bug reports
+- possibleRegression is true if the user mentions upgrading/updating and the issue appeared afterwards
+- nitro is true if the issue is specific to ONE deployment provider (Vercel, Netlify, Cloudflare, etc.)
+
+${PROMPT_INJECTION_GUARD}`,
+    input: { title: issue.title, body: getNormalizedIssueContent(issue.body || '') },
   })
 
-  const promptContent = buildEnhancedPromptContent(enhancedContext, true)
+  setHeader(event, 'x-analysis', JSON.stringify(analysis))
 
-  // Determine analysis strategy based on how the issue was closed
-  let systemPrompt = `You are analyzing a closed issue in an open source project to determine if it should be reopened based on new evidence. `
+  const promises: Array<Promise<unknown>> = []
+  const labels: IssueLabel[] = []
 
-  if (wasClosedAsNotPlanned(enhancedContext)) {
-    systemPrompt += `This issue was closed as 'not planned'. Consider if new evidence in comments suggests it should be reconsidered. Pay attention to issue history - if it has been closed and reopened multiple times, be more conservative about reopening. `
+  if (analysis.issueType === IssueType.Spam) {
+    promises.push(
+      transferIssue(github, issue.node_id, runtimeConfig.github.targetRepositoryNodeId)
+        .catch((error) => {
+          console.error('Failed to transfer spam issue, falling back to label', error)
+          return github.issues.addLabels({
+            owner: repository.owner.login,
+            repo: repository.name,
+            issue_number: issue.number,
+            labels: [IssueLabel.Spam],
+          })
+        }),
+    )
+
+    event.waitUntil(Promise.all(promises))
+    return Promise.allSettled(promises)
   }
-  else if (wasClosedAsDuplicate(enhancedContext, issueLabels)) {
-    systemPrompt += `This issue was closed as 'duplicate'. Only suggest reopening if there's clear evidence this is a different issue than the original. `
+
+  if (analysis.issueType === IssueType.Bug && !analysis.reproductionProvided) {
+    labels.push(IssueLabel.NeedsReproduction)
   }
-  else if (wasClosedAsCompleted(enhancedContext)) {
-    systemPrompt += `This issue was closed as completed. Only suggest reopening if there's evidence the issue has reappeared (possible regression). `
+  if (analysis.possibleRegression) {
+    labels.push(IssueLabel.PossibleRegression)
+  }
+  if (analysis.nitro) {
+    labels.push(IssueLabel.Nitro)
+  }
+  if (labels.length === 0 && (issue.labels?.length ?? 0) === 0) {
+    labels.push(IssueLabel.PendingTriage)
   }
 
-  systemPrompt += `Do not answer with anything else other than valid JSON. Here's the JSON schema you must adhere to:\n${toXML(enhancedAnalysisSchema)}\n`
+  if (labels.length > 0) {
+    promises.push(
+      github.issues.addLabels({
+        owner: repository.owner.login,
+        repo: repository.name,
+        issue_number: issue.number,
+        labels,
+      }),
+    )
+  }
 
-  const workersai = createWorkersAI({ binding: event.context.cloudflare.env.AI })
-  const { text: aiText } = await generateText({
-    model: workersai('@hf/nousresearch/hermes-2-pro-mistral-7b'),
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: promptContent },
-    ],
+  promises.push(
+    github.issues.update({
+      owner: repository.owner.login,
+      repo: repository.name,
+      issue_number: issue.number,
+      type: analysis.issueType,
+    }),
+  )
+
+  const spokenLanguage = getNormalizedLanguage(analysis.spokenLanguage)
+  if (runtimeConfig.triage.translateIssues && spokenLanguage !== 'en') {
+    promises.push(
+      translateIssue(event, payload, spokenLanguage).catch((error) => {
+        console.error('Error translating issue', error)
+      }),
+    )
+  }
+
+  event.waitUntil(Promise.all(promises))
+  setHeader(event, 'x-assigned-labels', JSON.stringify(labels))
+
+  return Promise.allSettled(promises)
+}
+
+async function translateIssue(event: H3Event, { issue, repository }: IssuesEvent, spokenLanguage: string) {
+  const github = useGitHubAPI(event)
+
+  const translation = await analyzeWithAI(event, {
+    tier: 'simple',
+    schema: translationSchema,
+    system: `Translate this GitHub issue from ${spokenLanguage} to English. Keep all markdown formatting, code blocks, and links intact.
+
+${PROMPT_INJECTION_GUARD}`,
+    input: { title: issue.title, body: issue.body || '' },
   })
 
-  setHeader(event, 'x-enhanced-comment-analysis', aiText)
-  const result = enhancedAnalysisResponseSchema.parse(JSON.parse(aiText || '{}'))
-  return { result, context: enhancedContext }
+  if (!translation.translatedTitle?.trim()) {
+    return
+  }
+
+  setHeader(event, 'x-translation', JSON.stringify({ from: spokenLanguage, bodyTranslated: !!translation.translatedBody }))
+
+  return github.issues.update({
+    owner: repository.owner.login,
+    repo: repository.name,
+    issue_number: issue.number,
+    title: `[${spokenLanguage}:translated] ${translation.translatedTitle}`,
+    ...(translation.translatedBody && issue.body
+      ? { body: `${issue.body}\n\n---\n\n**English translation:**\n\n${translation.translatedBody}` }
+      : {}),
+  })
+}
+
+async function handleIssueEdit(event: H3Event, { issue, repository }: IssuesEvent) {
+  if (issue.user?.type === 'Bot') {
+    return null
+  }
+
+  const issueLabels = issue.labels?.map(label => label.name) || []
+  if (!issueLabels.includes(IssueLabel.NeedsReproduction)) {
+    return null
+  }
+
+  const github = useGitHubAPI(event)
+  const promises: Array<Promise<unknown>> = []
+
+  try {
+    const analysis = await analyzeWithAI(event, {
+      tier: 'simple',
+      schema: commentAnalysisSchema,
+      system: `You analyse GitHub issues to determine if they contain reproduction information.
+
+A valid reproduction is:
+- A link to a GitHub repository with reproducible code
+- A link to StackBlitz or CodeSandbox
+- A complete, runnable code example (not just a snippet)
+
+${PROMPT_INJECTION_GUARD}`,
+      input: { title: issue.title, body: getNormalizedIssueContent(issue.body || '') },
+    })
+
+    setHeader(event, 'x-issue-edit-analysis', JSON.stringify(analysis))
+
+    if (!analysis.reproductionProvided) {
+      return null
+    }
+
+    promises.push(
+      github.issues.removeLabel({
+        owner: repository.owner.login,
+        repo: repository.name,
+        issue_number: issue.number,
+        name: IssueLabel.NeedsReproduction,
+      }),
+    )
+
+    if (issue.state === 'closed') {
+      promises.push(
+        github.issues.update({
+          owner: repository.owner.login,
+          repo: repository.name,
+          issue_number: issue.number,
+          state: 'open',
+        }),
+        github.issues.addLabels({
+          owner: repository.owner.login,
+          repo: repository.name,
+          issue_number: issue.number,
+          labels: [IssueLabel.PendingTriage],
+        }),
+      )
+    }
+
+    event.waitUntil(Promise.all(promises))
+    return Promise.allSettled(promises)
+  }
+  catch (e) {
+    console.error('Error processing issue edit', e)
+    return null
+  }
 }
 
 async function handleIssueComment(event: H3Event, { comment, issue, repository }: IssueCommentEvent) {
@@ -108,19 +237,16 @@ async function handleIssueComment(event: H3Event, { comment, issue, repository }
     return
   }
 
-  // Early return if collaborator - they can manually reopen issues if needed
+  // Collaborators can manage issues manually
   if (isCollaboratorOrHigher(comment.author_association)) {
-    return
-  }
-
-  if ('pull_request' in issue) {
     return
   }
 
   const issueLabels = issue.labels?.map(label => label.name) || []
   const hasNeedsReproductionLabel = issueLabels.includes(IssueLabel.NeedsReproduction)
+  const isClosed = issue.state === 'closed'
 
-  if (!hasNeedsReproductionLabel && issue.state !== 'closed') {
+  if (!hasNeedsReproductionLabel && !isClosed) {
     return
   }
 
@@ -128,85 +254,22 @@ async function handleIssueComment(event: H3Event, { comment, issue, repository }
   const promises: Array<Promise<unknown>> = []
 
   try {
-    let analysisResult: CommentAnalysisResult | EnhancedAnalysisResult
-    let enhancedContext: EnhancedContext | null = null
+    if (isClosed) {
+      const analysis = await analyzeClosedIssueComment(event, issue, repository, issueLabels, comment.body)
 
-    // For closed issues, use enhanced context analysis
-    if (issue.state === 'closed') {
-      const analysis = await analyzeClosedIssueComment(event, issue, repository, issueLabels)
-      analysisResult = analysis.result
-      enhancedContext = analysis.context
-    }
-    else {
-      // Use original analysis for open issues
-      const workersai = createWorkersAI({ binding: event.context.cloudflare.env.AI })
-      const { text: aiText } = await generateText({
-        model: workersai('@hf/nousresearch/hermes-2-pro-mistral-7b'),
-        messages: [
-          {
-            role: 'system',
-            content: `You categorise issues in an open source project. Reported bugs must have enough information to reproduce them, either a full code example or a link to GitHub, StackBlitz or CodeSandbox. Do not answer with anything else other than valid JSON. Here's the json schema you must adhere to:\n${toXML(commentAnalysisSchema)}\n`,
-          },
-          { role: 'user', content: JSON.stringify({ body: getNormalizedIssueContent(comment.body) }) },
-        ],
-      })
+      const shouldReopen
+        = analysis.result.possibleRegression
+          || (analysis.result.shouldReopen && analysis.result.confidence === 'high')
+          || (hasNeedsReproductionLabel && analysis.result.reproductionProvided)
 
-      setHeader(event, 'x-comment-analysis', aiText)
-      analysisResult = commentAnalysisResponseSchema.parse(JSON.parse(aiText || '{}'))
-    }
+      const guardsPassed
+        = (!wasClosedAsDuplicate(analysis.context, issueLabels) || analysis.result.isDifferentFromDuplicate)
+          && (!hasBeenReopenedMultipleTimes(analysis.context) || analysis.result.confidence === 'high')
 
-    // Handle analysis results
-    // 1. if a comment adds a reproduction
-    if (hasNeedsReproductionLabel && analysisResult.reproductionProvided) {
-      // we can go ahead and remove the 'needs reproduction' label
-      promises.push(
-        github.issues.removeLabel({
-          owner: repository.owner.login,
-          repo: repository.name,
-          issue_number: issue.number,
-          name: IssueLabel.NeedsReproduction,
-        }),
-      )
-      // ... plus, if issue is closed, we'll reopen it
-      if (issue.state === 'closed') {
-        promises.push(
-          github.issues.update({
-            owner: repository.owner.login,
-            repo: repository.name,
-            issue_number: issue.number,
-            state: 'open',
-          }),
-        )
-      }
-    }
-    // 2. if a resolved issue reappears (with enhanced logic for closed issues)
-    else if (issue.state === 'closed' && analysisResult.possibleRegression) {
-      // For closed issues, we have enhanced analysis results available
-      const enhancedResult = analysisResult as EnhancedAnalysisResult
-
-      // Check if we should reopen based on enhanced analysis
-      const shouldReopen = enhancedResult.shouldReopen || analysisResult.possibleRegression
-
-      if (!shouldReopen) {
+      if (!shouldReopen || !guardsPassed) {
         return Promise.resolve([])
       }
 
-      // For duplicate issues, only reopen if clearly different
-      if (wasClosedAsDuplicate(enhancedContext!, issueLabels) && !enhancedResult.isDifferentFromDuplicate) {
-        return Promise.resolve([])
-      }
-
-      // Collaborators and above can explicitly reopen if needed
-      if (isCollaboratorOrHigher(comment.author_association)) {
-        return Promise.resolve([])
-      }
-
-      // Check confidence level for automated reopening
-      if (enhancedResult.confidence !== 'high' && !analysisResult.possibleRegression) {
-        return Promise.resolve([])
-      }
-
-      // then reopen the issue
       promises.push(
         github.issues.update({
           owner: repository.owner.login,
@@ -216,9 +279,8 @@ async function handleIssueComment(event: H3Event, { comment, issue, repository }
         }),
       )
 
-      // ... and add appropriate labels
       const labelsToAdd = [IssueLabel.PendingTriage]
-      if (analysisResult.possibleRegression) {
+      if (analysis.result.possibleRegression) {
         labelsToAdd.push(IssueLabel.PossibleRegression)
       }
 
@@ -230,6 +292,45 @@ async function handleIssueComment(event: H3Event, { comment, issue, repository }
           labels: labelsToAdd,
         }),
       )
+
+      if (hasNeedsReproductionLabel && analysis.result.reproductionProvided) {
+        promises.push(
+          github.issues.removeLabel({
+            owner: repository.owner.login,
+            repo: repository.name,
+            issue_number: issue.number,
+            name: IssueLabel.NeedsReproduction,
+          }).catch(() => {}),
+        )
+      }
+    }
+    else {
+      const analysis = await analyzeWithAI(event, {
+        tier: 'simple',
+        schema: commentAnalysisSchema,
+        system: `You analyse comments on GitHub issues to determine if they provide reproduction information.
+
+A valid reproduction is:
+- A link to a GitHub repository
+- A link to StackBlitz or CodeSandbox
+- A complete, runnable code example
+
+${PROMPT_INJECTION_GUARD}`,
+        input: { comment: getNormalizedIssueContent(comment.body) },
+      })
+
+      setHeader(event, 'x-comment-analysis', JSON.stringify(analysis))
+
+      if (analysis.reproductionProvided) {
+        promises.push(
+          github.issues.removeLabel({
+            owner: repository.owner.login,
+            repo: repository.name,
+            issue_number: issue.number,
+            name: IssueLabel.NeedsReproduction,
+          }),
+        )
+      }
     }
 
     event.waitUntil(Promise.all(promises))
@@ -241,72 +342,56 @@ async function handleIssueComment(event: H3Event, { comment, issue, repository }
   }
 }
 
-async function handleIssueEdit(event: H3Event, { issue, repository }: IssuesEvent) {
-  if (issue.user?.type === 'Bot') {
-    return
+async function analyzeClosedIssueComment(
+  event: H3Event,
+  issue: IssueCommentEvent['issue'],
+  repository: IssueCommentEvent['repository'],
+  issueLabels: string[],
+  newComment: string,
+) {
+  const context = await gatherEnhancedContext(event, issue, repository, {
+    includeComments: true,
+    maxComments: 5,
+    includeTimeline: true,
+  })
+
+  let systemPrompt = `You are analysing a closed GitHub issue to determine if new evidence warrants reopening it.\n\nContext:\n- Issue was closed as: ${context.issueStateReason || 'unknown reason'}\n`
+
+  if (wasClosedAsNotPlanned(context)) {
+    systemPrompt += `- Closed as "not planned": consider if new evidence suggests it should be reconsidered\n`
+  }
+  if (wasClosedAsDuplicate(context, issueLabels)) {
+    systemPrompt += `- Marked as duplicate: only suggest reopening if this is clearly a different issue\n`
+  }
+  if (wasClosedAsCompleted(context)) {
+    systemPrompt += `- Closed as completed: only suggest reopening if a regression is detected\n`
+  }
+  if (hasBeenReopenedMultipleTimes(context)) {
+    systemPrompt += `- WARNING: This issue has been reopened multiple times before. Be conservative about suggesting reopening.\n`
   }
 
-  const issueLabels = issue.labels?.map(label => label.name) || []
-  const hasNeedsReproductionLabel = issueLabels.includes(IssueLabel.NeedsReproduction)
+  systemPrompt += `\n${PROMPT_INJECTION_GUARD}`
 
-  if (!hasNeedsReproductionLabel) {
-    return null
-  }
+  const result = await analyzeWithAI(event, {
+    tier: 'complex',
+    schema: enhancedAnalysisSchema,
+    system: systemPrompt,
+    input: `${buildEnhancedPromptContent(context, true)}\n\nNew Comment:\n${getNormalizedIssueContent(newComment)}`,
+  })
 
-  const github = useGitHubAPI(event)
-  const promises: Array<Promise<unknown>> = []
+  setHeader(event, 'x-enhanced-comment-analysis', JSON.stringify(result))
 
-  try {
-    const workersai = createWorkersAI({ binding: event.context.cloudflare.env.AI })
-    const { text: aiText } = await generateText({
-      model: workersai('@hf/nousresearch/hermes-2-pro-mistral-7b'),
-      messages: [
-        {
-          role: 'system',
-          content: `You categorise issues in an open source project. Reported bugs must have enough information to reproduce them, either a full code example or a link to GitHub, StackBlitz or CodeSandbox. Do not answer with anything else other than valid JSON. Here's the json schema you must adhere to:\n${toXML(commentAnalysisSchema)}\n`,
-        },
-        { role: 'user', content: JSON.stringify({ title: issue.title, body: getNormalizedIssueContent(issue.body || '') }) },
-      ],
-    })
-
-    setHeader(event, 'x-issue-edit-analysis', aiText)
-
-    const analysisResult: CommentAnalysisResult = commentAnalysisResponseSchema.parse(JSON.parse(aiText || '{}'))
-
-    if (analysisResult.reproductionProvided) {
-      // we can go ahead and remove the 'needs reproduction' label
-      promises.push(
-        github.issues.removeLabel({
-          owner: repository.owner.login,
-          repo: repository.name,
-          issue_number: issue.number,
-          name: IssueLabel.NeedsReproduction,
-        }),
-      )
-
-      event.waitUntil(Promise.all(promises))
-      return Promise.allSettled(promises)
-    }
-  }
-  catch (e) {
-    console.error('Error processing issue edit', e)
-    return null
-  }
-
-  return null
+  return { result, context }
 }
 
 async function handleIssueLabeled(event: H3Event, payload: IssuesEvent) {
-  // Type guard to ensure this is a labeled event
-  if (payload.action !== 'labeled') {
+  if (payload.action !== 'labeled' || !payload.label) {
     return null
   }
 
-  // TypeScript now knows this is IssuesLabeledEvent
   const { issue, label } = payload
 
-  // Only handle when the 'spam' label is added
-  if (!label || label.name !== IssueLabel.Spam) {
+  if (label.name !== IssueLabel.Spam) {
     return null
   }
 
@@ -314,168 +399,13 @@ async function handleIssueLabeled(event: H3Event, payload: IssuesEvent) {
   const github = useGitHubAPI(event)
 
   try {
-    // Transfer the issue to the spam repository
-    const result = await transferIssueToSpam(
-      github,
-      issue.node_id,
-      runtimeConfig.github.targetRepositoryNodeId,
-    )
-
+    const result = await transferIssue(github, issue.node_id, runtimeConfig.github.targetRepositoryNodeId)
     return { transferred: true, issueNumber: result.transferredIssueNumber }
   }
   catch (e) {
     console.error('Error transferring spam-labeled issue', e)
-    throw createError({
-      statusCode: 500,
-      message: 'Error transferring spam-labeled issue',
-    })
+    throw createError({ statusCode: 500, message: 'Error transferring spam-labeled issue' })
   }
 }
 
-async function handleNewIssue(event: H3Event, { action, issue, repository }: IssuesEvent) {
-  if (action !== 'opened') return null
-
-  const workersai = createWorkersAI({ binding: event.context.cloudflare.env.AI })
-  const runtimeConfig = useRuntimeConfig(event)
-
-  let analyzedIssue: z.infer<typeof analyzedIssueSchema> | null = null
-
-  // Run the AI model and parse the response
-  try {
-    const { text: aiText } = await generateText({
-      model: workersai('@hf/nousresearch/hermes-2-pro-mistral-7b'),
-      messages: [
-        {
-          role: 'system',
-          content: `You categorise issues in an open source project. Reported bugs must have enough information to reproduce them, either a full code example or a link to GitHub, StackBlitz or CodeSandbox. If the issue looks like spam (contains gibberish, nonsense, etc.), it is marked as spam. Do not mark issues as spam purely based on non-English content or bad grammar. Do not answer with anything else other than valid JSON. Here\`s the json schema you must adhere to:\n${toXML(responseSchema)}\n`,
-        },
-        { role: 'user', content: JSON.stringify({ title: issue.title, body: getNormalizedIssueContent(issue.body || '') }) },
-      ],
-    })
-
-    setHeader(event, 'x-ai-response', aiText)
-
-    if (!aiText) {
-      console.error('Missing AI response')
-      throw createError({
-        statusCode: 500,
-        message: 'Missing AI response',
-      })
-    }
-
-    try {
-      analyzedIssue = analyzedIssueSchema.parse(JSON.parse(aiText.trim()))
-    }
-    catch (e) {
-      console.error('Invalid AI response', aiText, e)
-      throw createError({
-        statusCode: 500,
-        message: 'Invalid AI response',
-      })
-    }
-  }
-  catch (e) {
-    if (isError(e)) {
-      throw e
-    }
-
-    console.error('Unknown AI error', e)
-    throw createError({
-      statusCode: 500,
-      message: 'Unknown AI error',
-    })
-  }
-
-  const github = useGitHubAPI(event)
-  const promises: Array<Promise<unknown>> = []
-
-  // Update the GitHub issue
-  try {
-    const labels: IssueLabel[] = []
-
-    if (analyzedIssue.issueType === IssueType.Spam) {
-      promises.push(
-        transferIssueToSpam(
-          github,
-          issue.node_id,
-          runtimeConfig.github.targetRepositoryNodeId,
-        ),
-      )
-    }
-    else {
-      if (analyzedIssue.issueType === IssueType.Bug && !analyzedIssue.reproductionProvided) {
-        labels.push(IssueLabel.NeedsReproduction)
-      }
-      if (analyzedIssue.issueType === IssueType.Bug && analyzedIssue.possibleRegression) {
-        labels.push(IssueLabel.PossibleRegression)
-      }
-      if (analyzedIssue.nitro) {
-        labels.push(IssueLabel.Nitro)
-      }
-    }
-
-    if (labels.length > 0) {
-      promises.push(
-        github.issues.addLabels({
-          owner: repository.owner.login,
-          repo: repository.name,
-          issue_number: issue.number,
-          labels,
-        }),
-      )
-    }
-
-    if (['documentation', 'bug', 'enhancement'].includes(analyzedIssue.issueType)) {
-      promises.push(github.issues.update({
-        owner: repository.owner.login,
-        repo: repository.name,
-        issue_number: issue.number,
-        type: analyzedIssue.issueType,
-      }))
-    }
-
-    // Translate non-English issue titles to English
-    if (analyzedIssue.spokenLanguage !== 'en' && analyzedIssue.issueType !== IssueType.Spam) {
-      try {
-        const ai = event.context.cloudflare.env.AI
-        const res = await ai.run('@cf/meta/m2m100-1.2b', {
-          text: issue.title,
-          source_lang: analyzedIssue.spokenLanguage,
-          target_lang: 'english',
-        })
-
-        setHeader(event, 'x-translation-response', JSON.stringify(res))
-
-        const { translated_text } = translationResponseSchema.parse(res)
-
-        if (!translated_text || !translated_text.trim().length) return
-        promises.push(
-          github.issues.update({
-            owner: repository.owner.login,
-            repo: repository.name,
-            issue_number: issue.number,
-            title: `[${analyzedIssue?.spokenLanguage}:translated] ${translated_text}`,
-          }),
-        )
-      }
-      catch (e) {
-        console.error('Error translating issue title', e)
-      }
-    }
-
-    event.waitUntil(Promise.all(promises))
-    setHeaders(event, {
-      'x-assigned-labels': JSON.stringify(labels),
-      'x-analysis': JSON.stringify(analyzedIssue),
-    })
-
-    return Promise.allSettled(promises)
-  }
-  catch (e) {
-    console.error('Error updating issue', e)
-    throw createError({
-      statusCode: 500,
-      message: 'Error updating issue',
-    })
-  }
-}
+export type NewIssueAnalysis = v.InferOutput<typeof newIssueAnalysisSchema>

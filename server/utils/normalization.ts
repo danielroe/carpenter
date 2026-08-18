@@ -21,7 +21,7 @@ export function getNormalizedIssueContent(txt: string) {
   const featureRequestContentStart = text.indexOf(FEATURE_REQUEST_TITLE)
   // Trim feature requests
   if (featureRequestContentStart !== -1) {
-    return text.slice(featureRequestContentStart, MAX_CONTENT_LENGTH).trim()
+    return text.slice(featureRequestContentStart, featureRequestContentStart + MAX_CONTENT_LENGTH).trim()
   }
 
   // Trim bug reports
@@ -29,11 +29,11 @@ export function getNormalizedIssueContent(txt: string) {
   if (bugReportContentStart !== -1) {
     // Exclude logs from the content, if present
     const bugReportLogsStart = text.indexOf(BUG_REPORT_LOGS_TITLE)
-    if (bugReportLogsStart !== -1) {
-      return text.slice(bugReportContentStart, Math.min(bugReportLogsStart, MAX_CONTENT_LENGTH)).trim()
+    if (bugReportLogsStart > bugReportContentStart) {
+      return text.slice(bugReportContentStart, Math.min(bugReportLogsStart, bugReportContentStart + MAX_CONTENT_LENGTH)).trim()
     }
 
-    return text.slice(bugReportContentStart, MAX_CONTENT_LENGTH).trim()
+    return text.slice(bugReportContentStart, bugReportContentStart + MAX_CONTENT_LENGTH).trim()
   }
 
   return text.slice(0, MAX_CONTENT_LENGTH).trim()
