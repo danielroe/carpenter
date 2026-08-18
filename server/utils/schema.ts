@@ -17,7 +17,7 @@ export enum IssueType {
   Spam = 'spam',
 }
 
-export const newIssueAnalysisSchema = v.object({
+export const newIssueAnalysisSchema = v.strictObject({
   issueType: v.pipe(
     v.picklist(['bug', 'enhancement', 'documentation', 'spam']),
     v.description('The type of issue. Use "enhancement" for feature requests.'),
@@ -40,7 +40,7 @@ export const newIssueAnalysisSchema = v.object({
   ),
 })
 
-export const commentAnalysisSchema = v.object({
+export const commentAnalysisSchema = v.strictObject({
   reproductionProvided: v.pipe(
     v.boolean(),
     v.description('Whether this content provides a reproduction (GitHub repo link, StackBlitz, CodeSandbox, or a complete runnable code example).'),
@@ -51,7 +51,7 @@ export const commentAnalysisSchema = v.object({
   ),
 })
 
-export const enhancedAnalysisSchema = v.object({
+export const enhancedAnalysisSchema = v.strictObject({
   reproductionProvided: v.pipe(
     v.boolean(),
     v.description('Whether a reproduction is provided in the issue or recent comments.'),
@@ -74,7 +74,7 @@ export const enhancedAnalysisSchema = v.object({
   ),
 })
 
-export const translationSchema = v.object({
+export const translationSchema = v.strictObject({
   translatedTitle: v.pipe(
     v.string(),
     v.description('The translated title in English.'),
