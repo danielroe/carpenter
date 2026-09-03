@@ -18,7 +18,7 @@
     "@octokit/rest": "^22.0.1",
     "@valibot/to-json-schema": "^1.7.1",
     "ai": "^7.0.9",
-    "nuxt": "^3.21.10",
+    "nuxt": "^4.0.0",
     "nuxt-webhook-validators": "^0.2.8",
     "valibot": "^1.1.0"
   },
