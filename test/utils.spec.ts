@@ -3,6 +3,7 @@ import { getLoggerProxy } from '../server/utils/proxy'
 import { getNormalizedIssueContent, getNormalizedLanguage } from '../server/utils/normalization'
 import { wasClosedAsNotPlanned, wasClosedAsDuplicate, wasClosedAsCompleted, hasBeenReopenedMultipleTimes, buildEnhancedPromptContent } from '../server/utils/context'
 import type { EnhancedContext } from '../server/utils/context'
+import { getEnvironmentSection, getVersionLabel } from '../server/utils/version'
 
 describe('getNormalizedIssueContent', () => {
   it('should strip HTML comments and diacritics', () => {
@@ -29,6 +30,51 @@ describe('getNormalizedLanguage', () => {
     expect(getNormalizedLanguage('ZH')).toBe('zh')
     expect(getNormalizedLanguage('english')).toBe('en')
     expect(getNormalizedLanguage(null)).toBe('en')
+  })
+})
+
+describe('getEnvironmentSection', () => {
+  it('should extract the environment section up to the next heading', () => {
+    const body = '<!-- hi -->\n### Environment\n\n- Nuxt Version: 4.5.2\n- Node: 22\n\n### Reproduction\nhttps://example.com'
+    expect(getEnvironmentSection(body)).toBe('- Nuxt Version: 4.5.2\n- Node: 22')
+  })
+
+  it('should return null when there is no environment section', () => {
+    expect(getEnvironmentSection('### Describe the feature\nplease')).toBeNull()
+    expect(getEnvironmentSection('### Environment\n\n### Reproduction\nfoo')).toBeNull()
+  })
+})
+
+describe('getVersionLabel', () => {
+  it('should map release versions to major labels', () => {
+    expect(getVersionLabel('3.17.4', '5')).toBe('3.x')
+    expect(getVersionLabel('4.5.2', '5')).toBe('4.x')
+    expect(getVersionLabel('^4.5.2', '5')).toBe('4.x')
+    expect(getVersionLabel('v4', '5')).toBe('4.x')
+    expect(getVersionLabel('4.x', '5')).toBe('4.x')
+    expect(getVersionLabel('5.0.0', '6')).toBe('5.x')
+  })
+
+  it('should map prereleases and nightlies by their leading major', () => {
+    expect(getVersionLabel('5.0.0-29810797.4436de29', '5')).toBe('5.x')
+    expect(getVersionLabel('nuxt-nightly 5.0.0-29810797.4436de29', '5')).toBe('5.x')
+    expect(getVersionLabel('4.0.0-alpha.3', '5')).toBe('4.x')
+    expect(getVersionLabel('3.0.0-rc.14', '5')).toBe('3.x')
+    expect(getVersionLabel('4.0.0-20260831-132907-8bcf1bc', '5')).toBe('4.x')
+  })
+
+  it('should resolve branch or channel names to the main branch major', () => {
+    expect(getVersionLabel('main', '5')).toBe('5.x')
+    expect(getVersionLabel('nightly', '5')).toBe('5.x')
+    expect(getVersionLabel('current main', '5')).toBe('5.x')
+    expect(getVersionLabel('main', '6')).toBeNull()
+  })
+
+  it('should return null for unknown or unsupported versions', () => {
+    expect(getVersionLabel(null, '5')).toBeNull()
+    expect(getVersionLabel('', '5')).toBeNull()
+    expect(getVersionLabel('2.17.3', '5')).toBeNull()
+    expect(getVersionLabel('latest', '5')).toBeNull()
   })
 })
 

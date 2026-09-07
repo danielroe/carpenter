@@ -7,6 +7,8 @@ import { newIssueAnalysisSchema, commentAnalysisSchema, enhancedAnalysisSchema, 
 import { isCollaboratorOrHigher } from '../utils/author-role'
 import { gatherEnhancedContext, wasClosedAsNotPlanned, wasClosedAsDuplicate, wasClosedAsCompleted, hasBeenReopenedMultipleTimes, buildEnhancedPromptContent } from '../utils/context'
 import { transferIssue } from '../utils/issue-transfer'
+import { getEnvironmentSection, getVersionLabel } from '../utils/version'
+import type { VersionLabel } from '../utils/version'
 
 export default defineEventHandler(async (event) => {
   if (!import.meta.dev && !(await isValidGitHubWebhook(event))) {
@@ -58,15 +60,20 @@ Guidelines:
 - "enhancement" is for feature requests, "documentation" is for docs improvements, "bug" is for bug reports
 - possibleRegression is true if the user mentions upgrading/updating and the issue appeared afterwards
 - nitro is true if the issue is specific to ONE deployment provider (Vercel, Netlify, Cloudflare, etc.)
+- nuxtVersion is the version of the nuxt package from the environment info ("Nuxt version", "nuxt:", "nuxt-nightly"), copied verbatim. Do NOT use the nuxt/cli, nitro, vue or node versions. If only a branch or channel is named (e.g. "main", "nightly"), return that word. Null if not stated
 
 ${PROMPT_INJECTION_GUARD}`,
-    input: { title: issue.title, body: getNormalizedIssueContent(issue.body || '') },
+    input: {
+      title: issue.title,
+      environment: getEnvironmentSection(issue.body || ''),
+      body: getNormalizedIssueContent(issue.body || ''),
+    },
   })
 
   setHeader(event, 'x-analysis', JSON.stringify(analysis))
 
   const promises: Array<Promise<unknown>> = []
-  const labels: IssueLabel[] = []
+  const labels: Array<IssueLabel | VersionLabel> = []
 
   if (analysis.issueType === IssueType.Spam) {
     promises.push(
@@ -97,6 +104,12 @@ ${PROMPT_INJECTION_GUARD}`,
   }
   if (labels.length === 0 && (issue.labels?.length ?? 0) === 0) {
     labels.push(IssueLabel.PendingTriage)
+  }
+  if (analysis.issueType === IssueType.Bug) {
+    const versionLabel = getVersionLabel(analysis.nuxtVersion, runtimeConfig.triage.mainBranchMajor)
+    if (versionLabel) {
+      labels.push(versionLabel)
+    }
   }
 
   if (labels.length > 0) {

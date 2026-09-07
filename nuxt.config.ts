@@ -16,6 +16,10 @@ export default defineNuxtConfig({
     triage: {
       projectName: 'Nuxt framework',
       translateIssues: true,
+      // Major version currently developed on `main`; used when a report only
+      // says "nightly"/"main" without a version number. Override with
+      // NUXT_TRIAGE_MAIN_BRANCH_MAJOR when a new major is released.
+      mainBranchMajor: '5',
     },
   },
   routeRules: {

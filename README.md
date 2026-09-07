@@ -11,6 +11,7 @@ On `issues.opened`:
 - Categorises the issue (bug / enhancement / documentation / spam) and sets the GitHub issue type
 - Labels bugs without a reproduction as `needs reproduction`
 - Labels possible regressions and Nitro/deployment-provider-specific issues
+- Labels bugs with the major version they are reported against (`3.x`, `4.x`, `5.x`), based on the Nuxt version in the environment section
 - Adds `pending triage` when nothing else applies
 - Transfers spam issues to a separate repository (falling back to a `spam` label if transfer fails)
 - Translates non-English issues (title prefix + appended body translation)
@@ -65,7 +66,7 @@ NUXT_AI_SIMPLE_MODEL=openai/gpt-4o-mini
 NUXT_AI_COMPLEX_MODEL=openai/gpt-4o
 ```
 
-Other optional overrides: `NUXT_TRIAGE_PROJECT_NAME`, `NUXT_TRIAGE_TRANSLATE_ISSUES`.
+Other optional overrides: `NUXT_TRIAGE_PROJECT_NAME`, `NUXT_TRIAGE_TRANSLATE_ISSUES`, `NUXT_TRIAGE_MAIN_BRANCH_MAJOR` (the major currently developed on `main`, used when a report only says "nightly" or "main" without a version number).
 
 ### GitHub webhook
 

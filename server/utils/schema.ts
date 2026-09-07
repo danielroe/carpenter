@@ -38,6 +38,10 @@ export const newIssueAnalysisSchema = v.strictObject({
     v.boolean(),
     v.description('True if the issue is specific to a single deployment provider (Vercel, Netlify, Cloudflare, etc.).'),
   ),
+  nuxtVersion: v.pipe(
+    v.nullable(v.string()),
+    v.description('The Nuxt framework version the issue is reported against, copied verbatim from the environment info (e.g. "4.5.2", "5.0.0-29810797.4436de29", "main", "nightly"). Only the nuxt package itself, not @nuxt/cli, nitro, vue or node. Null if not stated.'),
+  ),
 })
 
 export const commentAnalysisSchema = v.strictObject({
