@@ -141,7 +141,7 @@ importers:
         specifier: 7.6.1
         version: 7.6.1
       '@types/node':
-        specifier: ^24.13.3
+        specifier: 24.13.3
         version: 24.13.3
       eslint:
         specifier: 10.10.0
