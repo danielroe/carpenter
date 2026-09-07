@@ -48,3 +48,11 @@ export function getVersionLabel(version: string | null | undefined, mainBranchMa
   const label = `${major}.x`
   return VERSION_LABELS.includes(label as VersionLabel) ? label as VersionLabel : null
 }
+
+/**
+ * Extract the commit hash from a nightly version such as `5.0.0-29810797.4436de29`.
+ * @returns The short commit hash, or null for release versions.
+ */
+export function getNightlyCommit(version: string | null | undefined) {
+  return version?.match(/\d+\.\d+\.\d+-\d{6,}\.([0-9a-f]{7,40})\b/i)?.[1] ?? null
+}

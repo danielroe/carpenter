@@ -3,7 +3,7 @@ import { getLoggerProxy } from '../server/utils/proxy'
 import { getNormalizedIssueContent, getNormalizedLanguage } from '../server/utils/normalization'
 import { wasClosedAsNotPlanned, wasClosedAsDuplicate, wasClosedAsCompleted, hasBeenReopenedMultipleTimes, buildEnhancedPromptContent } from '../server/utils/context'
 import type { EnhancedContext } from '../server/utils/context'
-import { getEnvironmentSection, getVersionLabel } from '../server/utils/version'
+import { getEnvironmentSection, getVersionLabel, getNightlyCommit } from '../server/utils/version'
 
 describe('getNormalizedIssueContent', () => {
   it('should strip HTML comments and diacritics', () => {
@@ -238,5 +238,14 @@ describe('Enhanced Context Analysis', () => {
       expect(content).toContain('Issue Status History:')
       expect(content).toContain('closed on 2024-01-01T00:00:00Z by maintainer')
     })
+  })
+})
+
+describe('getNightlyCommit', () => {
+  it('should extract the commit hash from nightly versions', () => {
+    expect(getNightlyCommit('5.0.0-29810797.4436de29')).toBe('4436de29')
+    expect(getNightlyCommit('nuxt-nightly@5.0.0-29745181.e6d3afa3')).toBe('e6d3afa3')
+    expect(getNightlyCommit('4.5.2')).toBeNull()
+    expect(getNightlyCommit(null)).toBeNull()
   })
 })

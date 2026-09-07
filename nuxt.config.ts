@@ -27,6 +27,14 @@ export default defineNuxtConfig({
   },
   experimental: { noVueServer: true },
   compatibilityDate: '2024-08-07',
+  typescript: {
+    tsConfig: {
+      compilerOptions: {
+        allowImportingTsExtensions: true,
+        erasableSyntaxOnly: true,
+      },
+    },
+  },
   eslint: {
     config: {
       stylistic: true,

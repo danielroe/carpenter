@@ -1,14 +1,13 @@
-import type * as v from 'valibot'
 import type { H3Event } from 'h3'
 import type { IssuesEvent, IssueCommentEvent } from '@octokit/webhooks-types'
 
 import { PROMPT_INJECTION_GUARD, analyzeWithAI } from '../utils/ai'
 import { newIssueAnalysisSchema, commentAnalysisSchema, enhancedAnalysisSchema, translationSchema, IssueLabel, IssueType } from '../utils/schema'
+import { buildNewIssueSystemPrompt, buildNewIssueInput, deriveNewIssueLabels } from '../utils/triage'
 import { isCollaboratorOrHigher } from '../utils/author-role'
 import { gatherEnhancedContext, wasClosedAsNotPlanned, wasClosedAsDuplicate, wasClosedAsCompleted, hasBeenReopenedMultipleTimes, buildEnhancedPromptContent } from '../utils/context'
 import { transferIssue } from '../utils/issue-transfer'
-import { getEnvironmentSection, getVersionLabel } from '../utils/version'
-import type { VersionLabel } from '../utils/version'
+import { getNightlyCommit } from '../utils/version'
 
 export default defineEventHandler(async (event) => {
   if (!import.meta.dev && !(await isValidGitHubWebhook(event))) {
@@ -52,28 +51,18 @@ async function handleNewIssue(event: H3Event, payload: IssuesEvent) {
   const analysis = await analyzeWithAI(event, {
     tier: 'simple',
     schema: newIssueAnalysisSchema,
-    system: `You categorise issues in an open source project (${runtimeConfig.triage.projectName}).
-
-Guidelines:
-- Reported bugs MUST have reproduction information (GitHub repo link, StackBlitz, CodeSandbox, or a complete code example)
-- Mark as spam ONLY if content is gibberish or nonsense. Do NOT mark as spam based on non-English content, poor grammar, or short/terse descriptions
-- "enhancement" is for feature requests, "documentation" is for docs improvements, "bug" is for bug reports
-- possibleRegression is true if the user mentions upgrading/updating and the issue appeared afterwards
-- nitro is true if the issue is specific to ONE deployment provider (Vercel, Netlify, Cloudflare, etc.)
-- nuxtVersion is the version of the nuxt package from the environment info ("Nuxt version", "nuxt:", "nuxt-nightly"), copied verbatim. Do NOT use the nuxt/cli, nitro, vue or node versions. If only a branch or channel is named (e.g. "main", "nightly"), return that word. Null if not stated
-
-${PROMPT_INJECTION_GUARD}`,
-    input: {
-      title: issue.title,
-      environment: getEnvironmentSection(issue.body || ''),
-      body: getNormalizedIssueContent(issue.body || ''),
-    },
+    system: buildNewIssueSystemPrompt(runtimeConfig.triage.projectName),
+    input: buildNewIssueInput(issue),
   })
 
   setHeader(event, 'x-analysis', JSON.stringify(analysis))
 
   const promises: Array<Promise<unknown>> = []
-  const labels: Array<IssueLabel | VersionLabel> = []
+  const labels = deriveNewIssueLabels(analysis, {
+    existingLabels: issue.labels?.map(label => label.name) ?? [],
+    body: issue.body,
+    mainBranchMajor: runtimeConfig.triage.mainBranchMajor,
+  })
 
   if (analysis.issueType === IssueType.Spam) {
     promises.push(
@@ -84,7 +73,7 @@ ${PROMPT_INJECTION_GUARD}`,
             owner: repository.owner.login,
             repo: repository.name,
             issue_number: issue.number,
-            labels: [IssueLabel.Spam],
+            labels,
           })
         }),
     )
@@ -93,23 +82,9 @@ ${PROMPT_INJECTION_GUARD}`,
     return Promise.allSettled(promises)
   }
 
-  if (analysis.issueType === IssueType.Bug && !analysis.reproductionProvided) {
-    labels.push(IssueLabel.NeedsReproduction)
-  }
-  if (analysis.possibleRegression) {
-    labels.push(IssueLabel.PossibleRegression)
-  }
-  if (analysis.nitro) {
-    labels.push(IssueLabel.Nitro)
-  }
-  if (labels.length === 0 && (issue.labels?.length ?? 0) === 0) {
-    labels.push(IssueLabel.PendingTriage)
-  }
-  if (analysis.issueType === IssueType.Bug) {
-    const versionLabel = getVersionLabel(analysis.nuxtVersion, runtimeConfig.triage.mainBranchMajor)
-    if (versionLabel) {
-      labels.push(versionLabel)
-    }
+  const nightlyCommit = getNightlyCommit(analysis.nuxtVersion)
+  if (nightlyCommit) {
+    setHeader(event, 'x-nightly-commit', nightlyCommit)
   }
 
   if (labels.length > 0) {
@@ -292,7 +267,7 @@ async function handleIssueComment(event: H3Event, { comment, issue, repository }
         }),
       )
 
-      const labelsToAdd = [IssueLabel.PendingTriage]
+      const labelsToAdd: IssueLabel[] = [IssueLabel.PendingTriage]
       if (analysis.result.possibleRegression) {
         labelsToAdd.push(IssueLabel.PossibleRegression)
       }
@@ -420,5 +395,3 @@ async function handleIssueLabeled(event: H3Event, payload: IssuesEvent) {
     throw createError({ statusCode: 500, message: 'Error transferring spam-labeled issue' })
   }
 }
-
-export type NewIssueAnalysis = v.InferOutput<typeof newIssueAnalysisSchema>

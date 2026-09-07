@@ -10,7 +10,9 @@
     "postinstall": "nuxt prepare",
     "lint": "eslint .",
     "test": "vitest",
-    "typecheck": "nuxt typecheck"
+    "typecheck": "nuxt typecheck",
+    "eval:fetch": "node scripts/fetch-eval-issues.ts",
+    "eval": "node scripts/eval.ts"
   },
   "dependencies": {
     "@nuxt/eslint": "^1.15.2",
@@ -25,6 +27,7 @@
   "devDependencies": {
     "@nuxt/eslint-config": "1.17.0",
     "@octokit/webhooks-types": "7.6.1",
+    "@types/node": "^24.13.3",
     "eslint": "10.10.0",
     "typescript": "6.0.3",
     "vitest": "5.0.0",

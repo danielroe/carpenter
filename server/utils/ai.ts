@@ -25,7 +25,14 @@ interface AnalyzeOptions<S extends v.GenericSchema> {
 export async function analyzeWithAI<S extends v.GenericSchema>(event: H3Event, options: AnalyzeOptions<S>): Promise<v.InferOutput<S>> {
   const config = useRuntimeConfig(event).ai
   const model = options.tier === 'complex' ? config.complexModel : config.simpleModel
+  return runStructuredAnalysis(model, options)
+}
 
+/**
+ * Run a structured analysis against an explicit gateway model identifier.
+ * Has no dependency on the request context, so it can be used from scripts.
+ */
+export async function runStructuredAnalysis<S extends v.GenericSchema>(model: string, options: Omit<AnalyzeOptions<S>, 'tier'>): Promise<v.InferOutput<S>> {
   const { object } = await generateObject({
     model,
     schema: toAISchema(options.schema),
