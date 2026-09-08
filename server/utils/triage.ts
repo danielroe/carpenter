@@ -2,7 +2,7 @@ import { PROMPT_INJECTION_GUARD } from './ai.ts'
 import { getNormalizedIssueContent } from './normalization.ts'
 import { getEnvironmentSection, getVersionLabel } from './version.ts'
 import { IssueLabel, IssueType, AREAS, AREA_LABELS, BUNDLER_LABELS, PLATFORM_LABELS } from './schema.ts'
-import type { NewIssueAnalysis, Platform } from './schema.ts'
+import type { EnhancedAnalysis, NewIssueAnalysis, Platform } from './schema.ts'
 
 export function buildNewIssueSystemPrompt(projectName: string) {
   return `You categorise issues in an open source project (${projectName}).
@@ -70,6 +70,56 @@ export function isPlatformDiscussed(platform: Platform, body: string | null | un
   const environment = getEnvironmentSection(text)
   const rest = environment ? text.replace(environment, '') : text
   return PLATFORM_MENTIONS[platform].test(rest)
+}
+
+const RESOLUTION_ACKNOWLEDGEMENT = /\b(?:thanks?|thank you|thx|cheers|nice|great|perfect|awesome)\b|\b(?:works?|working|fixed|solved|resolved|sorted)\s+(?:now|for me|great|fine|as expected)\b|\bthat (?:fixed|solved|did) it\b/i
+const STILL_BROKEN = /\b(?:still|again|but|however|unfortunately|regress\w*|broke\w*|fails?|failing|error|not work\w*|doesn'?t work\w*|does not work)\b/i
+
+/**
+ * Short, link-free "thanks, that works now" comments are the most common kind of
+ * comment on a closed issue and never justify reopening it, so they are filtered
+ * out before paying for a nuanced model call.
+ */
+export function isResolutionAcknowledgement(comment: string) {
+  const text = comment.trim()
+  if (text.length > 200 || /https?:\/\/|```/.test(text)) {
+    return false
+  }
+  return RESOLUTION_ACKNOWLEDGEMENT.test(text) && !STILL_BROKEN.test(text)
+}
+
+export interface ReopenDecisionOptions {
+  hasNeedsReproductionLabel: boolean
+  wasClosedAsDuplicate: boolean
+  hasBeenReopenedMultipleTimes: boolean
+}
+
+/**
+ * Decide whether a comment on a closed issue justifies reopening it. A comment
+ * that does not claim the problem is still happening never does, however the
+ * rest of the analysis reads.
+ */
+export function shouldReopenClosedIssue(analysis: EnhancedAnalysis, options: ReopenDecisionOptions) {
+  if (analysis.commentIntent !== 'still-affected') {
+    return false
+  }
+
+  const hasNewEvidence
+    = analysis.possibleRegression
+      || (analysis.shouldReopen && analysis.confidence === 'high')
+      || (options.hasNeedsReproductionLabel && analysis.reproductionProvided)
+
+  if (!hasNewEvidence) {
+    return false
+  }
+  if (options.wasClosedAsDuplicate && !analysis.isDifferentFromDuplicate) {
+    return false
+  }
+  if (options.hasBeenReopenedMultipleTimes && analysis.confidence !== 'high') {
+    return false
+  }
+
+  return true
 }
 
 /**

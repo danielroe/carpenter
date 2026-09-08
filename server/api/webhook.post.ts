@@ -3,7 +3,7 @@ import type { IssuesEvent, IssueCommentEvent } from '@octokit/webhooks-types'
 
 import { PROMPT_INJECTION_GUARD, analyzeWithAI } from '../utils/ai'
 import { newIssueAnalysisSchema, commentAnalysisSchema, enhancedAnalysisSchema, translationSchema, IssueLabel, IssueType } from '../utils/schema'
-import { buildNewIssueSystemPrompt, buildNewIssueInput, deriveNewIssueLabels } from '../utils/triage'
+import { buildNewIssueSystemPrompt, buildNewIssueInput, deriveNewIssueLabels, isResolutionAcknowledgement, shouldReopenClosedIssue } from '../utils/triage'
 import { isCollaboratorOrHigher } from '../utils/author-role'
 import { gatherEnhancedContext, wasClosedAsNotPlanned, wasClosedAsDuplicate, wasClosedAsCompleted, hasBeenReopenedMultipleTimes, buildEnhancedPromptContent } from '../utils/context'
 import { transferIssue } from '../utils/issue-transfer'
@@ -243,18 +243,20 @@ async function handleIssueComment(event: H3Event, { comment, issue, repository }
 
   try {
     if (isClosed) {
+      if (isResolutionAcknowledgement(comment.body)) {
+        setHeader(event, 'x-comment-skipped', 'resolution-acknowledgement')
+        return Promise.resolve([])
+      }
+
       const analysis = await analyzeClosedIssueComment(event, issue, repository, issueLabels, comment.body)
 
-      const shouldReopen
-        = analysis.result.possibleRegression
-          || (analysis.result.shouldReopen && analysis.result.confidence === 'high')
-          || (hasNeedsReproductionLabel && analysis.result.reproductionProvided)
+      const shouldReopen = shouldReopenClosedIssue(analysis.result, {
+        hasNeedsReproductionLabel,
+        wasClosedAsDuplicate: wasClosedAsDuplicate(analysis.context, issueLabels),
+        hasBeenReopenedMultipleTimes: hasBeenReopenedMultipleTimes(analysis.context),
+      })
 
-      const guardsPassed
-        = (!wasClosedAsDuplicate(analysis.context, issueLabels) || analysis.result.isDifferentFromDuplicate)
-          && (!hasBeenReopenedMultipleTimes(analysis.context) || analysis.result.confidence === 'high')
-
-      if (!shouldReopen || !guardsPassed) {
+      if (!shouldReopen) {
         return Promise.resolve([])
       }
 
@@ -343,7 +345,13 @@ async function analyzeClosedIssueComment(
     includeTimeline: true,
   })
 
-  let systemPrompt = `You are analysing a closed GitHub issue to determine if new evidence warrants reopening it.\n\nContext:\n- Issue was closed as: ${context.issueStateReason || 'unknown reason'}\n`
+  let systemPrompt = `You are analysing a closed GitHub issue to determine if new evidence warrants reopening it.
+
+Only the newest comment is new evidence; the issue body and earlier comments are background. Classify what that comment is doing in commentIntent, and judge possibleRegression, shouldReopen and reproductionProvided from the comment itself rather than from the issue it is posted on. A comment thanking someone, confirming a fix or workaround, or asking about future plans is never grounds for reopening, even on an issue that was originally a regression.
+
+Context:
+- Issue was closed as: ${context.issueStateReason || 'unknown reason'}
+`
 
   if (wasClosedAsNotPlanned(context)) {
     systemPrompt += `- Closed as "not planned": consider if new evidence suggests it should be reconsidered\n`

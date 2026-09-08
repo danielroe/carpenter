@@ -20,7 +20,7 @@ On `issues.opened`:
 On `issues.edited` and `issue_comment.created`:
 
 - Removes `needs reproduction` when a reproduction is added, reopening the issue if needed
-- For comments on closed issues, runs a deeper analysis (recent comments + timeline) to decide whether to reopen: regressions, "not planned" issues with new evidence, or duplicates that turn out to be distinct. Guarded by confidence levels and reopen history.
+- For comments on closed issues, runs a deeper analysis (recent comments + timeline) to decide whether to reopen: regressions, "not planned" issues with new evidence, or duplicates that turn out to be distinct. Guarded by confidence levels and reopen history. Comments that confirm a fix, thank someone or ask about future plans never reopen, and short "thanks, that works now" comments skip the analysis entirely.
 
 On `issues.labeled`:
 

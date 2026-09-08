@@ -116,7 +116,14 @@ export const commentAnalysisSchema = v.strictObject({
   ),
 })
 
+export const COMMENT_INTENTS = ['still-affected', 'resolved', 'question', 'other'] as const
+export type CommentIntent = typeof COMMENT_INTENTS[number]
+
 export const enhancedAnalysisSchema = v.strictObject({
+  commentIntent: v.pipe(
+    v.picklist(COMMENT_INTENTS),
+    v.description('What the new comment is doing: "still-affected" if the commenter reports the problem still happening (or happening again); "resolved" if they confirm it is fixed, thank someone, or say a suggested workaround or import worked; "question" if they are asking about plans, future versions or usage; "other" for anything else.'),
+  ),
   reproductionProvided: v.pipe(
     v.boolean(),
     v.description('Whether a reproduction is provided in the issue or recent comments.'),
@@ -151,3 +158,4 @@ export const translationSchema = v.strictObject({
 })
 
 export type NewIssueAnalysis = v.InferOutput<typeof newIssueAnalysisSchema>
+export type EnhancedAnalysis = v.InferOutput<typeof enhancedAnalysisSchema>
