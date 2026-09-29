@@ -48,12 +48,16 @@ async function handleNewIssue(event: H3Event, payload: IssuesEvent) {
   const runtimeConfig = useRuntimeConfig(event)
   const github = useGitHubAPI(event)
 
-  const analysis = await analyzeWithAI(event, {
+  const rawAnalysis = await analyzeWithAI(event, {
     tier: 'simple',
     schema: newIssueAnalysisSchema,
     system: buildNewIssueSystemPrompt(runtimeConfig.triage.projectName),
     input: buildNewIssueInput(issue),
   })
+
+  const isTrustedAuthor = isCollaboratorOrHigher(issue.author_association)
+  const skipIssueType = isTrustedAuthor && rawAnalysis.issueType === IssueType.Spam
+  const analysis = skipIssueType ? { ...rawAnalysis, issueType: IssueType.Enhancement } : rawAnalysis
 
   setHeader(event, 'x-analysis', JSON.stringify(analysis))
 
@@ -98,14 +102,16 @@ async function handleNewIssue(event: H3Event, payload: IssuesEvent) {
     )
   }
 
-  promises.push(
-    github.issues.update({
-      owner: repository.owner.login,
-      repo: repository.name,
-      issue_number: issue.number,
-      type: analysis.issueType,
-    }),
-  )
+  if (!skipIssueType) {
+    promises.push(
+      github.issues.update({
+        owner: repository.owner.login,
+        repo: repository.name,
+        issue_number: issue.number,
+        type: analysis.issueType,
+      }),
+    )
+  }
 
   const spokenLanguage = getNormalizedLanguage(analysis.spokenLanguage)
   if (runtimeConfig.triage.translateIssues && spokenLanguage !== 'en') {
